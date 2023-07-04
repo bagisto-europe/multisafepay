@@ -1,0 +1,32 @@
+{
+    "name": "bagisto-eu/multisafepay",
+    "description": "MultiSafepay Payment Method for Bagisto",
+    "type": "library",
+    "version": "1.0.0",
+    "authors": [
+      {
+        "name": "Bagisto Europe",
+        "email": "info@bagisto.eu"
+      }
+    ],
+    "autoload": {
+      "psr-4": {
+        "Bagisto\\MultiSafePay\\": "src/"
+      }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Bagisto\\MultiSafePay\\Providers\\MultiSafePayServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "require": {
+      "multisafepay/sdk": "^2.0"
+    }
+  }

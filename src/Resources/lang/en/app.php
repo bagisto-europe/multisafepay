@@ -2,7 +2,9 @@
 
 return [
     'system' => [
-        'apiKey' => 'API Key',
+        'title' => 'MultiSafePay',
+        'info' => 'a Dutch payment service provider that is offering a wide range of payment methods.',
+        'api-key' => 'API Key',
         'production' => 'Production mode'
     ]
 ];

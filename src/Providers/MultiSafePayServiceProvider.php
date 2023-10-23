@@ -14,7 +14,7 @@ class MultiSafePayServiceProvider extends ServiceProvider
     public function register()
     {
         $this->mergeConfigFrom(
-            dirname(__DIR__) . '/Config/paymentmethods.php', 'paymentmethods'
+            dirname(__DIR__) . '/Config/paymentmethods.php', 'payment_methods'
         );
 
         $this->mergeConfigFrom(
@@ -31,5 +31,7 @@ class MultiSafePayServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->loadRoutesFrom(dirname(__DIR__) . '/Routes/web.php');
+
+        $this->loadTranslationsFrom(__DIR__ . '/../Resources/lang', 'multisafepay');
     }
 }

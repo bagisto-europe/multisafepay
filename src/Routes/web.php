@@ -3,5 +3,8 @@
 /**
  * Multisafepay routes.
  */
-require 'multisafepay-routes.php';
+
+ require 'checkout-routes.php';
+ 
+ require 'multisafepay-routes.php';
 

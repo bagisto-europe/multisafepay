@@ -6,7 +6,7 @@ return [
         'title'       => 'MultiSafePay',
         'description' => 'MultiSafepay Payment Method for Bagisto',
         'class'       => 'Bagisto\MultiSafePay\Payment\MultiSafePay',
-        'active'      => true,
-        'sort'        => 3
+        'active'      => false,
+        'sort'        => 4
     ],
 ];

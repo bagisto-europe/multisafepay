@@ -2,28 +2,30 @@
 
 return [
     [
-        'key'    => 'sales.paymentmethods.multisafepay',
-        'name'   => 'MultiSafePay',
+        'key'    => 'sales.payment_methods.multisafepay',
+        'name'   => 'multisafepay::app.system.title',
+        'info'   => 'multisafepay::app.system.info',
         'sort'   => 3,
         'fields' => [
             [
                 'name'          => 'apikey',
-                'title'         => 'API Key',
+                'title'         => 'multisafepay::app.system.api-key',
                 'type'          => 'text',
-                'validation'    => 'required',
+                'validation'    => 'required_if:active,1',
                 'channel_based' => true,
                 'locale_based'  => false,
-            ], [
-                'name'          => 'sandbox',
-                'title'         => 'Production environment',
+            ],
+            [
+                'name'          => 'production',
+                'title'         => 'multisafepay::app.system.production',
                 'type'          => 'boolean',
                 'channel_based' => true,
                 'locale_based'  => false,
-            ], [
+            ],
+            [
                 'name'          => 'active',
-                'title'         => 'admin::app.admin.system.status',
+                'title'         => 'admin::app.configuration.index.sales.payment-methods.status',
                 'type'          => 'boolean',
-                'validation'    => 'required',
                 'channel_based' => true,
                 'locale_based'  => false,
             ]

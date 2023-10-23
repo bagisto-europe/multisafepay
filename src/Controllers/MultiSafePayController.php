@@ -16,12 +16,29 @@ use Webkul\Sales\Repositories\OrderTransactionRepository;
  
 class MultiSafePayController extends Controller
 {
+
+    /**
+     * apiKey object
+     *
+     * @var object
+     */
+    private $apiKey;
+
+    /**
+     * Production object
+     *
+     * @var object
+     */
+    private $production;
+
+
     /**
      * Order object
      *
      * @var object
      */
     protected $order;
+
 
     /**
      * Order repository instance.
@@ -63,8 +80,8 @@ class MultiSafePayController extends Controller
         $this->orderTransactionRepository = $orderTransactionRepository;
         $this->multisafepay = $multiSafepay;
 
-        $apiKey  = core()->getConfigData('sales.paymentmethods.multisafepay.apikey');
-        $sandbox = core()->getConfigData('sales.paymentmethods.multisafepay.sandbox');
+        $apiKey  = core()->getConfigData('sales.payment_methods.multisafepay.apikey');
+        $production = core()->getConfigData('sales.payment_methods.multisafepay.production');
     }
 
     /**
@@ -75,9 +92,7 @@ class MultiSafePayController extends Controller
      */
     public function webhook(string $orderId)
     {
-
-
-        $multiSafepaySdk = new Sdk($this->apiKey, $this->$sandbox);
+        $multiSafepaySdk = new Sdk($this->apiKey, $this->$production);
         $transaction = $multiSafepaySdk->getTransactionManager()->get($orderId);
 
         $status = $transaction->getStatus();
@@ -93,8 +108,22 @@ class MultiSafePayController extends Controller
                     
                     if ($this->order->canInvoice()) {
                         $this->invoiceRepository->create($this->prepareInvoiceData());
+
+                        $this->orderTransactionRepository->create([
+                            'transaction_id' => bin2hex($randomId),
+                            'type'           => $request->payment_method,
+                            'payment_method' => $request->payment_method,
+                            'invoice_id'     => $invoice->id,
+                            'order_id'       => $invoice->order_id,
+                            'amount'         => $request->amount,
+                            'status'         => 'paid',
+                            'data'           => json_encode([
+                                'paidAmount' => $request->amount,
+                            ])
+                        ]);
                     }
 
+                    
                 } elseif ($status === 'cancelled' || $status === 'void') {
                     $this->orderRepository->cancel($transaction->getOrderId());
                 }

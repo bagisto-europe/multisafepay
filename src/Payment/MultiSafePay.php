@@ -24,11 +24,11 @@ use Webkul\Sales\Repositories\OrderRepository;
 
 class MultiSafePay extends Payment
 {
-   /**
-    * Payment method code
-    *
-    * @var string
-    */
+    /**
+     * Payment method code
+     *
+     * @var string
+     */
     protected $code  = 'multisafepay';
 
     /**
@@ -39,11 +39,11 @@ class MultiSafePay extends Payment
     private $apiKey;
 
     /**
-     * Flag indicating if sandbox mode is enabled.
+     * Flag indicating if production mode is enabled.
      *
      * @var bool
      */
-    private $sandbox;
+    private $production;
 
     /**
      * OrderRepository object.
@@ -57,31 +57,13 @@ class MultiSafePay extends Payment
      *
      * @param OrderRepository $orderRepository The order repository instance.
      */
-    public function __construct(OrderRepository $orderRepository) {
-        $this->apiKey = core()->getConfigData('sales.paymentmethods.multisafepay.apikey');
+    public function __construct(OrderRepository $orderRepository)
+    {
+        $this->apiKey = core()->getConfigData('sales.payment_methods.multisafepay.apikey');
 
         $this->orderRepository = $orderRepository;
 
-        $this->sandbox = core()->getConfigData('sales.paymentmethods.multisafepay.sandbox');
-    }
-
-    /**
-     * Get the version number from composer.json.
-     *
-     * @return string The version number.
-     */
-    public function getVersion(): string {
-        
-        $composerJsonPath = dirname(dirname(__DIR__)) . '/composer.json';
-
-        if (file_exists($composerJsonPath)) {
-            $composerJson = file_get_contents($composerJsonPath);
-            $composerData = json_decode($composerJson, true);
-            
-            if (isset($composerData['version'])) {
-                return $composerData['version'];
-            }
-        }
+        $this->production = core()->getConfigData('sales.payment_methods.multisafepay.sandbox');
     }
 
     /**
@@ -89,15 +71,22 @@ class MultiSafePay extends Payment
      *
      * @return array
      */
-    public function getAvailablePaymentMethods(): array {
-        $multiSafepaySdk = new Sdk($this->apiKey, $this->sandbox);
+    public function getAvailablePaymentMethods(): array
+    {
+        $multiSafepaySdk = new Sdk($this->apiKey, $this->production);
 
         $paymentMethods = $multiSafepaySdk->getPaymentMethodManager()->getPaymentMethods();
 
-        return $paymentMethods;
+        if ($paymentMethods) {
+            $result = $paymentMethods;
+        } else {
+            $result = [];
+        }
+
+        return $result;
     }
 
-   /**
+    /**
      * Get the redirect URL for MultiSafepay payment.
      *
      * @return string
@@ -110,55 +99,58 @@ class MultiSafePay extends Payment
 
             $order = $this->orderRepository->create(Cart::prepareDataForOrder());
 
-            $orderId = $order->increment_id;
-            session(['order' => $order]);
+            if ($order) {
+                $orderId = $order->increment_id;
 
-            $multiSafepaySdk = new Sdk($this->apiKey, $this->sandbox);
+                $multiSafepaySdk = new Sdk($this->apiKey, $this->production ?? false);
 
-            $description = '#' . $orderId;
-            
-            $amount = new Money(round($cart->sub_total * 100), $cart->cart_currency_code);
-            
-            $address = (new Address())
-                ->addStreetName($billingAddress->address1)
-                ->addZipCode($billingAddress->postcode)
-                ->addCity($billingAddress->city)
-                ->addState($billingAddress->state)
-                ->addCountry(new Country($billingAddress->country));
-            
-            $customer = (new CustomerDetails())
-                ->addFirstName($billingAddress->first_name)
-                ->addLastName($billingAddress->last_name)
-                ->addAddress($address)
-                ->addEmailAddress(new EmailAddress($order->customer_email))
-                ->addPhoneNumber(new PhoneNumber($order->addresses["0"]->phone))
-                ->addLocale('nl_NL');
+                $description = $order->channel_name . ' - Order ID #' . $orderId;
+
+                $amount = new Money(round($cart->sub_total * 100), $cart->cart_currency_code);
+
+                $address = (new Address())
+                    ->addStreetName($billingAddress->address1)
+                    ->addZipCode($billingAddress->postcode)
+                    ->addCity($billingAddress->city)
+                    ->addState($billingAddress->state)
+                    ->addCountry(new Country($billingAddress->country));
+
+                $customer = (new CustomerDetails())
+                    ->addFirstName($billingAddress->first_name)
+                    ->addLastName($billingAddress->last_name)
+                    ->addAddress($address)
+                    ->addEmailAddress(new EmailAddress($order->customer_email))
+                    ->addPhoneNumber(new PhoneNumber($order->addresses["0"]->phone));
+                //->addLocale('nl_NL');
+
+                $pluginDetails = (new PluginDetails())
+                    ->addPartner('Bagisto Europe')
+                    ->addApplicationName('Bagisto')
+                    ->addApplicationVersion(core()->version())
+                    ->addPluginVersion(1.0);
+
+                $paymentOptions = (new PaymentOptions())
+                    //->addNotificationUrl(route('multisafepay.webhook'))
+                    ->addRedirectUrl(route('shop.checkout.success'))
+                    ->addCancelUrl(route('shop.checkout.success'))
+                    ->addCloseWindow(true);
+
+                $orderRequest = (new OrderRequest())
+                    ->addType('redirect')
+                    ->addOrderId($orderId)
+                    ->addDescriptionText($description)
+                    ->addMoney($amount)
+                    ->addCustomer($customer)
+                    ->addDelivery($customer)
+                    ->addPluginDetails($pluginDetails)
+                    ->addPaymentOptions($paymentOptions);
+
+                Cart::deActivateCart();
                 
-            $pluginDetails = (new PluginDetails())
-                ->addPartner('Bagisto Europe')
-                ->addApplicationName('Bagisto')
-                ->addApplicationVersion(core()->version())
-                ->addPluginVersion($this->getVersion());
-            
-            $paymentOptions = (new PaymentOptions())
-                //->addNotificationUrl(route('multisafepay.webhook'))
-                ->addRedirectUrl(route('shop.checkout.success'))
-                ->addCancelUrl(route('shop.checkout.success'))
-                ->addCloseWindow(true);
-            
-            $orderRequest = (new OrderRequest())
-                ->addType('redirect')
-                ->addOrderId($orderId)
-                ->addDescriptionText($description)
-                ->addMoney($amount)
-                ->addCustomer($customer)
-                ->addDelivery($customer)
-                ->addPluginDetails($pluginDetails)
-                ->addPaymentOptions($paymentOptions);
+                $transactionManager = $multiSafepaySdk->getTransactionManager()->create($orderRequest);
 
-            $transactionManager = $multiSafepaySdk->getTransactionManager()->create($orderRequest);
-
-            return $transactionManager->getPaymentUrl();
+                return $transactionManager->getPaymentUrl();
+            }
         }
     }
 }

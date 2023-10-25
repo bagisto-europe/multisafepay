@@ -2,7 +2,9 @@
 
 namespace Bagisto\MultiSafePay\Providers;
 
+use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Route;
 
 class MultiSafePayServiceProvider extends ServiceProvider
 {
@@ -28,10 +30,16 @@ class MultiSafePayServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    public function boot()
+    public function boot(Router $router)
     {
-        $this->loadRoutesFrom(dirname(__DIR__) . '/Routes/web.php');
+        /* loaders */
+        Route::middleware('web')->group(dirname(__DIR__).'/Routes/web.php');
+        
+        //$this->loadRoutesFrom(dirname(__DIR__).'/Routes/web.php');
 
-        $this->loadTranslationsFrom(__DIR__ . '/../Resources/lang', 'multisafepay');
+        $this->loadTranslationsFrom(__DIR__.'/../Resources/lang', 'multisafepay');
+
+        $this->loadViewsFrom(__DIR__.'/../Resources/views', 'multisafepay');
+
     }
 }

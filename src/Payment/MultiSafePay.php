@@ -36,14 +36,14 @@ class MultiSafePay extends Payment
      *
      * @var string
      */
-    private $apiKey;
+    protected $apiKey;
 
     /**
      * Flag indicating if production mode is enabled.
      *
      * @var bool
      */
-    private $production;
+    protected $productionMode;
 
     /**
      * OrderRepository object.
@@ -63,7 +63,7 @@ class MultiSafePay extends Payment
 
         $this->orderRepository = $orderRepository;
 
-        $this->production = core()->getConfigData('sales.payment_methods.multisafepay.sandbox');
+        $this->productionMode = core()->getConfigData('sales.payment_methods.multisafepay.production');
     }
 
     /**
@@ -71,9 +71,9 @@ class MultiSafePay extends Payment
      *
      * @return array
      */
-    public function getAvailablePaymentMethods(): array
+    public function getAvailablePaymentMethods()
     {
-        $multiSafepaySdk = new Sdk($this->apiKey, $this->production);
+        $multiSafepaySdk = new Sdk($this->apiKey, $this->productionMode);
 
         $paymentMethods = $multiSafepaySdk->getPaymentMethodManager()->getPaymentMethods();
 
@@ -84,6 +84,21 @@ class MultiSafePay extends Payment
         }
 
         return $result;
+    }
+
+    /**
+     * Get the payment status for a specific order ID.
+     *
+     * @param int $orderId The ID of the order for which to retrieve the payment status.
+     *
+     * @return \MultiSafepay\Api\Transactions\Transaction The payment transaction object.
+     */
+    public function getPaymentStatusForOrder($orderId)
+    {
+        $multiSafepaySdk = new Sdk($this->apiKey, $this->productionMode);
+        $transaction = $multiSafepaySdk->getTransactionManager()->get($orderId);
+
+        return $transaction;
     }
 
     /**
@@ -100,9 +115,11 @@ class MultiSafePay extends Payment
             $order = $this->orderRepository->create(Cart::prepareDataForOrder());
 
             if ($order) {
+                session(['order' => $order]);
+
                 $orderId = $order->increment_id;
 
-                $multiSafepaySdk = new Sdk($this->apiKey, $this->production ?? false);
+                $multiSafepaySdk = new Sdk($this->apiKey, $this->productionMode ?? false);
 
                 $description = $order->channel_name . ' - Order ID #' . $orderId;
 
@@ -127,12 +144,12 @@ class MultiSafePay extends Payment
                     ->addPartner('Bagisto Europe')
                     ->addApplicationName('Bagisto')
                     ->addApplicationVersion(core()->version())
-                    ->addPluginVersion(1.0);
+                    ->addPluginVersion($this->getPluginVersion());
 
                 $paymentOptions = (new PaymentOptions())
                     //->addNotificationUrl(route('multisafepay.webhook'))
-                    ->addRedirectUrl(route('shop.checkout.success'))
-                    ->addCancelUrl(route('shop.checkout.success'))
+                    ->addRedirectUrl(route('shop.checkout.onepage.success'))
+                    ->addCancelUrl(route('shop.checkout.onepage.success'))
                     ->addCloseWindow(true);
 
                 $orderRequest = (new OrderRequest())
@@ -146,11 +163,25 @@ class MultiSafePay extends Payment
                     ->addPaymentOptions($paymentOptions);
 
                 Cart::deActivateCart();
-                
+
                 $transactionManager = $multiSafepaySdk->getTransactionManager()->create($orderRequest);
 
                 return $transactionManager->getPaymentUrl();
             }
         }
+    }
+
+    /**
+     * Get the version number of the Bagisto MultiSafePay package.
+     *
+     * @return string The version number.
+     */
+    public function getPluginVersion()
+    {
+        $manifestPath = dirname(__DIR__) . '/Resources/manifest.php';
+        $manifest = include $manifestPath;
+        $version = $manifest['version'];
+
+        return $version;
     }
 }

@@ -2,10 +2,10 @@
 
 namespace Bagisto\MultiSafePay\Controllers;
 
+use Bagisto\MultiSafePay\Payment\MultiSafePay;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Log;
-use MultiSafepay\Sdk;
 
 use Webkul\Checkout\Facades\Cart;
 use Webkul\Sales\Repositories\InvoiceRepository;
@@ -13,52 +13,131 @@ use Webkul\Sales\Repositories\OrderRepository;
 
 use Webkul\Shop\Http\Controllers\Controller;
 
-
 class OnePageController extends Controller
 {
-    /**
-     * Create a new controller instance.
-     *
-     * @param  \Webkul\Sales\Repositories\OrderRepository  $orderRepository
-     * @return void
-     */
-    public function __construct(
-        protected InvoiceRepository $invoiceRepository, 
-        protected OrderRepository $orderRepository,
-    )
-    {
 
+    protected $invoiceRepository;
+
+    protected $orderRepository;
+
+    protected $multiSafepay;
+
+    public function __construct(
+        InvoiceRepository $invoiceRepository,
+        OrderRepository $orderRepository,
+        MultiSafePay $multiSafepay
+    ) {
+        $this->invoiceRepository = $invoiceRepository;
+        $this->orderRepository = $orderRepository;
+        $this->multiSafepay = $multiSafepay;
+    }
+
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\View\View
+     */
+    public function index()
+    {
+        Event::dispatch('checkout.load.index');
+
+        /**
+         * If guest checkout is not allowed then redirect back to the cart page
+         */
+        if (
+            !auth()->guard('customer')->check()
+            && !core()->getConfigData('catalog.products.guest_checkout.allow_guest_checkout')
+        ) {
+            return redirect()->route('shop.customer.session.index');
+        }
+
+        /**
+         * If user is suspended then redirect back to the cart page
+         */
+        if (auth()->guard('customer')->user()?->is_suspended) {
+            session()->flash('warning', trans('shop::app.checkout.cart.suspended-account-message'));
+
+            return redirect()->route('shop.checkout.cart.index');
+        }
+
+        /**
+         * If cart has errors then redirect back to the cart page
+         */
+        if (Cart::hasError()) {
+            return redirect()->route('shop.checkout.cart.index');
+        }
+
+        $cart = Cart::getCart();
+
+        /**
+         * If cart is has downloadable items and customer is not logged in
+         * then redirect back to the cart page
+         */
+        if (
+            !auth()->guard('customer')->check()
+            && ($cart->hasDownloadableItems()
+                || !$cart->hasGuestCheckoutItems()
+            )
+        ) {
+            return redirect()->route('shop.customer.session.index');
+        }
+
+        /**
+         * If cart minimum order amount is not satisfied then redirect back to the cart page
+         */
+        $minimumOrderAmount = (float) core()->getConfigData('sales.order_settings.minimum_order.minimum_order_amount') ?: 0;
+
+        if (!$cart->checkMinimumOrder()) {
+            session()->flash('warning', trans('shop::app.checkout.cart.minimum-order-message', [
+                'amount' => core()->currency($minimumOrderAmount)
+            ]));
+
+            return redirect()->back();
+        }
+
+        /**
+         * Get all payment methods from MultiSafePay
+         */
+        $multisafepayPayMethods = collect($this->multiSafepay->getAvailablePaymentMethods());
+
+        return view('multisafepay::checkout.onepage.index', compact('multisafepayPayMethods'));
     }
 
     /**
      * Order success page.
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\View\View|\Illuminate\Http\RedirectResponse
      */
     public function success(Request $request)
     {
-        $transactionid = $request->transactionid;
-
-        $apiKey  = core()->getConfigData('sales.payment_methods.multisafepay.apikey');
-        $production = core()->getConfigData('sales.payment_methods.multisafepay.production');
-
-        $multiSafepaySdk = new Sdk($apiKey, $production);      
-        $order = $this->orderRepository->find($transactionid);
-
-        $transaction = $multiSafepaySdk->getTransactionManager()->get($order->id);
-        $status = $transaction->getStatus();
-
-        if ($status === 'completed' && $order->canInvoice()) {
-            $order->status = 'processing';
-
-            $this->invoiceRepository->create($this->prepareInvoiceData($order));
+        if (!$order = session('order')) {
+            return redirect()->route('shop.checkout.cart.index');
         }
-       
+
+        if (isset($request->transactionid)) {
+            $transactionid = $request->transactionid;
+
+            $order = $this->orderRepository->find($transactionid);
+
+            $transactionData = $this->multiSafepay->getPaymentStatusForOrder($order->id);
+            $status = $transactionData->getStatus();
+
+            if ($status === 'completed') {
+                if ($order->status = 'pending') {
+                    $order->status = 'processing';
+                }
+
+                if ($order->canInvoice()) {
+                    $invoice = $this->invoiceRepository->create($this->prepareInvoiceData($order));
+                }
+            }
+        }
+
         return view('shop::checkout.success', compact('order'));
     }
 
     /**
-     * Prepares order's invoice data for creation.
+     * Prepare invoice data from order.
      *
      * @param  \Webkul\Sales\Models\Order  $order
      * @return array

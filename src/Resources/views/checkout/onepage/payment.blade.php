@@ -33,44 +33,82 @@
                                 >
 
                                     {!! view_render_event('bagisto.shop.checkout.payment-method.before') !!}
-
-                                    <input 
-                                        type="radio" 
-                                        name="payment[method]" 
-                                        :value="payment.payment"
-                                        :id="payment.method"
-                                        class="hidden peer"    
-                                        @change="store(payment)"
-                                    >
-        
-                                    <label 
-                                        :for="payment.method" 
-                                        class="absolute ltr:right-[20px] rtl:left-[20px] top-[20px] icon-radio-unselect text-[24px] text-navyBlue peer-checked:icon-radio-select cursor-pointer"
-                                    >
-                                    </label>
-
-                                    <label 
-                                        :for="payment.method" 
-                                        class="w-[190px] p-[20px] block border border-[#E9E9E9] rounded-[12px] max-sm:w-full cursor-pointer"
-                                    >
-
-                                        <img
-                                            class="max-w-[55px] max-h-[45px]"
-                                            :src="paymentImages[payment.method] || '{{ bagisto_asset('images/paypal.png') }}'"
-                                            width="55"
-                                            height="55"
-                                            :alt="payment.method_title"
-                                            :title="payment.method_title"
+                                    <div v-if="payment.method === 'multisafepay'" class="flex flex-wrap gap-[20px] mt-[30px]">
+                                        <div v-for="paymentMethod in MultiSafePaymentMethods">
+                                            <input 
+                                                type="radio" 
+                                                name="payment[method]"
+                                                :value="payment.method - paymentMethod.id"
+                                                :id="'paymentMethod_' + paymentMethod.id"
+                                                class="hidden peer"    
+                                                @change="store(payment)"
+                                            >
+                                            <label 
+                                                :for="'paymentMethod_' + paymentMethod.id" 
+                                                class="absolute ltr:right-[20px] rtl:left-[20px] top-[20px] icon-radio-unselect text-[24px] text-navyBlue peer-checked:icon-radio-select cursor-pointer"
+                                            >
+                                            </label>
+                                            <label 
+                                                :for="'paymentMethod_' + paymentMethod.id"
+                                                class="w-[190px] p-[20px] block border border-[#E9E9E9] rounded-[12px] max-sm:w-full cursor-pointer"
+                                            >
+                                                <img
+                                                    class="max-w-[55px] max-h-[45px]"
+                                                    :src="paymentMethod.logo"
+                                                    width="80"
+                                                    height="80"
+                                                    :alt="paymentMethod.name"
+                                                    :title="paymentMethod.name"
+                                                >
+                                                <p class="text-[14px] font-semibold mt-[5px]">
+                                                    @{{ paymentMethod.name }}
+                                                </p>
+                                                <p class="text-[12px] font-medium mt-[10px]">
+                                                    @{{ paymentMethod.name }}
+                                                </p>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    
+                                    <div v-else>
+                                        <input 
+                                            type="radio" 
+                                            name="payment[method]" 
+                                            :value="payment.payment"
+                                            :id="payment.method"
+                                            class="hidden peer"    
+                                            @change="store(payment)"
                                         >
                                         
-                                        <p class="text-[14px] font-semibold mt-[5px]">
-                                            @{{ payment.method_title }}
-                                        </p>
+                                        <label 
+                                            :for="payment.method" 
+                                            class="absolute ltr:right-[20px] rtl:left-[20px] top-[20px] icon-radio-unselect text-[24px] text-navyBlue peer-checked:icon-radio-select cursor-pointer"
+                                        >
+                                        </label>
                                         
-                                        <p class="text-[12px] font-medium mt-[10px]">
-                                            @{{ payment.description }}
-                                        </p>
-                                    </label>
+                                        <label 
+                                            :for="payment.method" 
+                                            class="w-[190px] p-[20px] block border border-[#E9E9E9] rounded-[12px] max-sm:w-full cursor-pointer"
+                                        >
+
+                                            <img
+                                                class="max-w-[55px] max-h-[45px]"
+                                                :src="paymentImages[payment.method] || '{{ bagisto_asset('images/paypal.png') }}'"
+                                                width="55"
+                                                height="55"
+                                                :alt="payment.method_title"
+                                                :title="payment.method_title"
+                                            >
+                                            
+                                            <p class="text-[14px] font-semibold mt-[5px]">
+                                                @{{ payment.method_title }}
+                                            </p>
+                                            
+                                            <p class="text-[12px] font-medium mt-[10px]">
+                                                @{{ payment.description }}
+                                            </p>
+                                        </label>
+                                    </div>
 
                                     {!! view_render_event('bagisto.shop.checkout.payment-method.after') !!}
 
@@ -104,6 +142,10 @@
                 }
             },
 
+            created() {
+                this.getMultiSafePaymentMethods();
+            },
+
             methods: {
                 store(selectedPaymentMethod) {
                     this.$axios.post("{{ route('shop.checkout.onepage.payment_methods.store') }}", {
@@ -118,6 +160,16 @@
                         })
                         .catch(error => console.log(error));
                 },
+
+                getMultiSafePaymentMethods() {
+                        this.$axios.get("{{ route('multisafepay.payment_methods')}}")
+                        .then(response => {
+                            this.MultiSafePaymentMethods = response.data;
+                            
+                            console.log('MultiSafePaymentMethods:', this.MultiSafePaymentMethods);
+                        })
+                        .catch(error => console.log(error));
+                    }
             },
         });
     </script>

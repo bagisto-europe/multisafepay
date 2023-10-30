@@ -156,6 +156,8 @@ class MultiSafePayController extends Controller
     {
         $data = collect($this->multiSafepay->getAvailablePaymentMethods());
 
-        dd($data);
+        
+        //return dd($data);
+        return response()->json($data);
     }
 }

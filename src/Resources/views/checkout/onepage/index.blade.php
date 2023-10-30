@@ -56,7 +56,7 @@
 
                     @include('shop::checkout.onepage.shipping')
 
-                    @include('shop::checkout.onepage.payment')
+                    @include('multisafepay::checkout.onepage.payment')
 
                 </div>
                 

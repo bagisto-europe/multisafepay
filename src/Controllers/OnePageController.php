@@ -115,9 +115,9 @@ class OnePageController extends Controller
         }
 
         if (isset($request->transactionid)) {
-            $transactionid = $request->transactionid;
+            $transactionId = $request->transactionid;
 
-            $order = $this->orderRepository->find($transactionid);
+            $order = $this->orderRepository->find($transactionId);
 
             $transactionData = $this->multiSafepay->getPaymentStatusForOrder($order->id);
             $status = $transactionData->getStatus();

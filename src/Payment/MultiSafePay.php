@@ -2,10 +2,8 @@
 
 namespace Bagisto\MultiSafePay\Payment;
 
-use Carbon\Carbon;
-use Illuminate\Support\Facades\Log;
-
 use MultiSafepay\Sdk;
+use MultiSafepay\Api\PaymentMethods\PaymentMethod;
 use MultiSafepay\ValueObject\Customer\Country;
 use MultiSafepay\ValueObject\Customer\Address;
 use MultiSafepay\ValueObject\Customer\PhoneNumber;
@@ -77,10 +75,14 @@ class MultiSafePay extends Payment
 
         $paymentMethods = $multiSafepaySdk->getPaymentMethodManager()->getPaymentMethods();
 
-        if ($paymentMethods) {
-            $result = $paymentMethods;
-        } else {
-            $result = [];
+        $result = [];
+
+        foreach ($paymentMethods as $paymentMethod) {
+            $result[] = [
+                'id' => $paymentMethod->getId(),
+                'name' => $paymentMethod->getName(),
+                'logo' => $paymentMethod-> getLargeIconUrl(),
+            ];
         }
 
         return $result;

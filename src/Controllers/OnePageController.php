@@ -152,4 +152,10 @@ class OnePageController extends Controller
 
         return $invoiceData;
     }
+
+    public function storeInSession()
+    {
+        session()->put('multipay_id', request()->id);
+        return response()->json(['status' => true]);
+    }
 }

@@ -27,94 +27,101 @@
         
                         <x-slot:content>
                             <div class="flex flex-wrap gap-[29px] mt-[30px]">
-                                <div 
-                                    class="relative max-sm:max-w-full max-sm:flex-auto cursor-pointer"
-                                    v-for="(payment, index) in payment_methods"
-                                >
-
-                                    {!! view_render_event('bagisto.shop.checkout.payment-method.before') !!}
-                                    <div v-if="payment.method === 'multisafepay'" class="flex flex-wrap gap-[20px] mt-[30px]">
+                                {!! view_render_event('bagisto.shop.checkout.payment-method.before') !!}
+                                <template v-for="(payment, index) in payment_methods">
+                                    <template v-if="payment.method === 'multisafepay'">
                                         <div v-for="paymentMethod in MultiSafePaymentMethods">
-                                            <input 
-                                                type="radio" 
-                                                name="payment[method]"
-                                                :value="payment.method - paymentMethod.id"
-                                                :id="'paymentMethod_' + paymentMethod.id"
-                                                class="hidden peer"    
-                                                @change="store(payment)"
-                                            >
-                                            <label 
-                                                :for="'paymentMethod_' + paymentMethod.id" 
-                                                class="absolute ltr:right-[20px] rtl:left-[20px] top-[20px] icon-radio-unselect text-[24px] text-navyBlue peer-checked:icon-radio-select cursor-pointer"
-                                            >
-                                            </label>
-                                            <label 
-                                                :for="'paymentMethod_' + paymentMethod.id"
-                                                class="w-[190px] p-[20px] block border border-[#E9E9E9] rounded-[12px] max-sm:w-full cursor-pointer"
-                                            >
-                                                <img
-                                                    class="max-w-[55px] max-h-[45px]"
-                                                    :src="paymentMethod.logo"
-                                                    width="80"
-                                                    height="80"
-                                                    :alt="paymentMethod.name"
-                                                    :title="paymentMethod.name"
+                                            <div class="relative max-sm:max-w-full max-sm:flex-auto cursor-pointer">
+                                                <input 
+                                                    type="radio" 
+                                                    name="payment[method]"
+                                                    :value="`${payment.method} - ${paymentMethod.id}`"
+                                                    :id="'paymentMethod_' + paymentMethod.id"
+                                                    class="hidden peer"    
+                                                    @change="store({
+                                                        ...payment,
+                                                        ...{
+                                                            method_title: paymentMethod.id
+                                                        }
+                                                    })"
                                                 >
-                                                <p class="text-[14px] font-semibold mt-[5px]">
-                                                    @{{ paymentMethod.name }}
-                                                </p>
-                                                <p class="text-[12px] font-medium mt-[10px]">
-                                                    @{{ paymentMethod.name }}
-                                                </p>
-                                            </label>
+                                                <label 
+                                                    :for="'paymentMethod_' + paymentMethod.id" 
+                                                    class="absolute ltr:right-[20px] rtl:left-[20px] top-[20px] icon-radio-unselect text-[24px] text-navyBlue peer-checked:icon-radio-select cursor-pointer"
+                                                >
+                                                </label>
+                                                <label 
+                                                    :for="'paymentMethod_' + paymentMethod.id"
+                                                    class="w-[190px] p-[20px] block border border-[#E9E9E9] rounded-[12px] max-sm:w-full cursor-pointer"
+                                                >
+                                                    <img
+                                                        class="max-w-[55px] max-h-[45px]"
+                                                        :src="paymentMethod.logo"
+                                                        width="80"
+                                                        height="80"
+                                                        :alt="paymentMethod.name"
+                                                        :title="paymentMethod.name"
+                                                    >
+                                                    <p class="text-[14px] font-semibold mt-[5px]">
+                                                        @{{ paymentMethod.name }}
+                                                    </p>
+                                                    <p class="text-[12px] font-medium mt-[10px]">
+                                                        @{{ paymentMethod.name }}
+                                                    </p>
+                                                </label>
+                                            </div>
                                         </div>
-                                    </div>
-                                    
-                                    <div v-else>
-                                        <input 
-                                            type="radio" 
-                                            name="payment[method]" 
-                                            :value="payment.payment"
-                                            :id="payment.method"
-                                            class="hidden peer"    
-                                            @change="store(payment)"
-                                        >
-                                        
-                                        <label 
-                                            :for="payment.method" 
-                                            class="absolute ltr:right-[20px] rtl:left-[20px] top-[20px] icon-radio-unselect text-[24px] text-navyBlue peer-checked:icon-radio-select cursor-pointer"
-                                        >
-                                        </label>
-                                        
-                                        <label 
-                                            :for="payment.method" 
-                                            class="w-[190px] p-[20px] block border border-[#E9E9E9] rounded-[12px] max-sm:w-full cursor-pointer"
-                                        >
+                                    </template>
 
-                                            <img
-                                                class="max-w-[55px] max-h-[45px]"
-                                                :src="paymentImages[payment.method] || '{{ bagisto_asset('images/paypal.png') }}'"
-                                                width="55"
-                                                height="55"
-                                                :alt="payment.method_title"
-                                                :title="payment.method_title"
-                                            >
-                                            
-                                            <p class="text-[14px] font-semibold mt-[5px]">
-                                                @{{ payment.method_title }}
-                                            </p>
-                                            
-                                            <p class="text-[12px] font-medium mt-[10px]">
-                                                @{{ payment.description }}
-                                            </p>
-                                        </label>
-                                    </div>
+                                    <template v-else>
+                                        <div class="relative max-sm:max-w-full max-sm:flex-auto cursor-pointer">
+                                            <div>
+                                                <input 
+                                                    type="radio" 
+                                                    name="payment[method]" 
+                                                    :value="payment.payment"
+                                                    :id="payment.method"
+                                                    class="hidden peer"    
+                                                    @change="store(payment)"
+                                                >
+                                                
+                                                <label 
+                                                    :for="payment.method" 
+                                                    class="absolute ltr:right-[20px] rtl:left-[20px] top-[20px] icon-radio-unselect text-[24px] text-navyBlue peer-checked:icon-radio-select cursor-pointer"
+                                                >
+                                                </label>
+                                                
+                                                <label 
+                                                    :for="payment.method" 
+                                                    class="w-[190px] p-[20px] block border border-[#E9E9E9] rounded-[12px] max-sm:w-full cursor-pointer"
+                                                >
 
-                                    {!! view_render_event('bagisto.shop.checkout.payment-method.after') !!}
+                                                    <img
+                                                        class="max-w-[55px] max-h-[45px]"
+                                                        :src="paymentImages[payment.method] || '{{ bagisto_asset('images/paypal.png') }}'"
+                                                        width="55"
+                                                        height="55"
+                                                        :alt="payment.method_title"
+                                                        :title="payment.method_title"
+                                                    >
+                                                    
+                                                    <p class="text-[14px] font-semibold mt-[5px]">
+                                                        @{{ payment.method_title }}
+                                                    </p>
+                                                    
+                                                    <p class="text-[12px] font-medium mt-[10px]">
+                                                        @{{ payment.description }}
+                                                    </p>
+                                                </label>
+                                            </div>
 
-                                    <!-- Todo implement the additionalDetails -->
-                                    {{-- \Webkul\Payment\Payment::getAdditionalDetails($payment['method'] --}}
-                                </div>
+                                            <!-- Todo implement the additionalDetails -->
+                                            {{-- \Webkul\Payment\Payment::getAdditionalDetails($payment['method'] --}}
+                                        </div>
+                                    </template>
+                                </template>
+
+                                {!! view_render_event('bagisto.shop.checkout.payment-method.after') !!}
                             </div>
                         </x-slot:content>
                     </x-shop::accordion>
@@ -148,6 +155,8 @@
 
             methods: {
                 store(selectedPaymentMethod) {
+                    this.$axios.post("{{ route('shop.checkout.onepage.multipay') }}", {id: selectedPaymentMethod.method_title});
+
                     this.$axios.post("{{ route('shop.checkout.onepage.payment_methods.store') }}", {
                             payment: selectedPaymentMethod
                         })

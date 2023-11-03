@@ -159,6 +159,7 @@ class MultiSafePay extends Payment
                     ->addOrderId($orderId)
                     ->addDescriptionText($description)
                     ->addMoney($amount)
+                    ->addGatewayCode(session()->get('multipay_id'))
                     ->addCustomer($customer)
                     ->addDelivery($customer)
                     ->addPluginDetails($pluginDetails)

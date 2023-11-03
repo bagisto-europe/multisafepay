@@ -120,6 +120,7 @@ class MultiSafePay extends Payment
                 session(['order' => $order]);
 
                 $orderId = $order->increment_id;
+                $randomOrderId = $orderId . rand(10000, 99999);
 
                 $multiSafepaySdk = new Sdk($this->apiKey, $this->productionMode ?? false);
 
@@ -154,12 +155,22 @@ class MultiSafePay extends Payment
                     ->addCancelUrl(route('shop.checkout.onepage.success'))
                     ->addCloseWindow(true);
 
+                $selectedGateway = '';
+                $orderItemAdditional = $order->items->first()->additional;
+                if (isset($orderItemAdditional['payment'])) {
+                    $selectedGateway = $orderItemAdditional['payment']['payment_method'];
+                    $orderPayment = $order->payment;
+                    $orderPayment->update([
+                        'additional' => array_merge($orderPayment->additional ?? [], ['payment' => $orderItemAdditional['payment']])
+                    ]);
+                }
+
                 $orderRequest = (new OrderRequest())
                     ->addType('redirect')
-                    ->addOrderId($orderId)
+                    ->addOrderId($randomOrderId)
                     ->addDescriptionText($description)
                     ->addMoney($amount)
-                    ->addGatewayCode(session()->get('multipay_id'))
+                    ->addGatewayCode($selectedGateway)
                     ->addCustomer($customer)
                     ->addDelivery($customer)
                     ->addPluginDetails($pluginDetails)

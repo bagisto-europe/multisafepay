@@ -21,13 +21,12 @@ class Core extends WebkulCore
             && request()->id
             && (
                 (
-                    str_contains(request()->route()->getName(), 'orders')
-                    && ($order = app('\Webkul\Sales\Repositories\OrderRepository')->find(request()->id))
-                )
-                || (
-                    str_contains(request()->route()->getName(), 'invoices')
+                    str_contains(request()->route()->getName(), 'invoice')
                     && ($invoice = app('\Webkul\Sales\Repositories\InvoiceRepository')->find(request()->id))
                     && ($order = $invoice->order)
+                ) || (
+                    str_contains(request()->route()->getName(), 'order')
+                    && ($order = app('\Webkul\Sales\Repositories\OrderRepository')->find(request()->id))
                 )
             )
             && ($additionalPaymentInfo = $order->payment->additional['payment'] ?? false)

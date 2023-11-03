@@ -120,7 +120,7 @@ class MultiSafePay extends Payment
                 session(['order' => $order]);
 
                 $orderId = $order->increment_id;
-                $randomOrderId = $orderId . rand(10000, 99999);
+                $randomOrderId = $orderId;
 
                 $multiSafepaySdk = new Sdk($this->apiKey, $this->productionMode ?? false);
 

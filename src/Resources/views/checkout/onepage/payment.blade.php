@@ -41,7 +41,8 @@
                                                     @change="store({
                                                         ...payment,
                                                         ...{
-                                                            method_title: paymentMethod.id
+                                                            payment_method: paymentMethod.id,
+                                                            payment_method_title: paymentMethod.name
                                                         }
                                                     })"
                                                 >
@@ -155,8 +156,6 @@
 
             methods: {
                 store(selectedPaymentMethod) {
-                    this.$axios.post("{{ route('shop.checkout.onepage.multipay') }}", {id: selectedPaymentMethod.method_title});
-
                     this.$axios.post("{{ route('shop.checkout.onepage.payment_methods.store') }}", {
                             payment: selectedPaymentMethod
                         })
@@ -166,6 +165,11 @@
                             if (response.data.cart) {
                                 this.$parent.$refs.vCartSummary.canPlaceOrder = true;
                             }
+
+                            this.$axios.post("{{ route('shop.checkout.onepage.multipay') }}", {
+                                payment_method: selectedPaymentMethod.payment_method,
+                                payment_method_title: selectedPaymentMethod.payment_method_title
+                            });
                         })
                         .catch(error => console.log(error));
                 },

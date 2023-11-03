@@ -155,7 +155,19 @@ class OnePageController extends Controller
 
     public function storeInSession()
     {
-        session()->put('multipay_id', request()->id);
+        $cart = \Cart::getCart();
+        if ($cart->payment->method === 'multisafepay') {
+            $cartFirstItem = $cart->items->first();
+            $cartFirstItem->update([
+                'additional' => [
+                    ...$cartFirstItem->additional,
+                    ...[
+                        'payment' => request()->all()
+                    ]
+                ]
+            ]);
+        }
+
         return response()->json(['status' => true]);
     }
 }

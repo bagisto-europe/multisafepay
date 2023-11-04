@@ -128,6 +128,7 @@ class OnePageController extends Controller
                 }
 
                 if ($order->canInvoice()) {
+                    request()->merge([ 'can_create_transaction' => 1 ]);
                     $invoice = $this->invoiceRepository->create($this->prepareInvoiceData($order));
                 }
             }

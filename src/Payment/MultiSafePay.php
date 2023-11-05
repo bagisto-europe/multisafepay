@@ -120,13 +120,13 @@ class MultiSafePay extends Payment
                 session(['order' => $order]);
 
                 $orderId = $order->increment_id;
-                $randomOrderId = $orderId;
+                $randomOrderId = core()->getConfigData('sales.payment_methods.multisafepay.prefix') . $orderId;
 
                 $multiSafepaySdk = new Sdk($this->apiKey, $this->productionMode ?? false);
 
                 $description = $order->channel_name . ' - Order ID #' . $orderId;
 
-                $amount = new Money(round($cart->sub_total * 100), $cart->cart_currency_code);
+                $amount = new Money(round($cart->grand_total * 100), $cart->cart_currency_code);
 
                 $address = (new Address())
                     ->addStreetName($billingAddress->address1)
@@ -164,6 +164,7 @@ class MultiSafePay extends Payment
                         'additional' => array_merge($orderPayment->additional ?? [], ['payment' => $orderItemAdditional['payment']])
                     ]);
                 }
+                \Log::info("selected gateway is $selectedGateway for order id: $orderId");
 
                 $orderRequest = (new OrderRequest())
                     ->addType('redirect')

@@ -16,6 +16,14 @@ return [
                 'locale_based'  => false,
             ],
             [
+                'name'          => 'prefix',
+                'title'         => 'multisafepay::app.system.order-id-prefix',
+                'type'          => 'text',
+                'validation'    => 'required_if:active,1',
+                'channel_based' => true,
+                'locale_based'  => false,
+            ],
+            [
                 'name'          => 'production',
                 'title'         => 'multisafepay::app.system.production',
                 'type'          => 'boolean',

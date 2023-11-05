@@ -115,11 +115,12 @@ class OnePageController extends Controller
         }
 
         if (isset($request->transactionid)) {
-            $transactionId = $request->transactionid;
+            $orderPrefix = core()->getConfigData('sales.payment_methods.multisafepay.prefix');
+            $transactionId = explode($orderPrefix, $request->transactionid)[1];
 
             $order = $this->orderRepository->find($transactionId);
 
-            $transactionData = $this->multiSafepay->getPaymentStatusForOrder($order->id);
+            $transactionData = $this->multiSafepay->getPaymentStatusForOrder($orderPrefix . $order->id);
             $status = $transactionData->getStatus();
 
             if ($status === 'completed') {

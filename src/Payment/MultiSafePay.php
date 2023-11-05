@@ -119,7 +119,7 @@ class MultiSafePay extends Payment
             if ($order) {
                 session(['order' => $order]);
 
-                $orderId = $order->increment_id;
+                $orderId = $order->id;
                 $randomOrderId = core()->getConfigData('sales.payment_methods.multisafepay.prefix') . $orderId;
 
                 $multiSafepaySdk = new Sdk($this->apiKey, $this->productionMode ?? false);
@@ -150,7 +150,7 @@ class MultiSafePay extends Payment
                     ->addPluginVersion($this->getPluginVersion());
 
                 $paymentOptions = (new PaymentOptions())
-                    //->addNotificationUrl(route('multisafepay.webhook'))
+                    // ->addNotificationUrl(route('multisafepay.webhook', $orderId))
                     ->addRedirectUrl(route('shop.checkout.onepage.success'))
                     ->addCancelUrl(route('shop.checkout.onepage.success'))
                     ->addCloseWindow(true);

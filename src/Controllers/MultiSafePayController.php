@@ -99,10 +99,13 @@ class MultiSafePayController extends Controller
      */
     public function webhook(Request $request)
     {
-        if (isset($request->transactionId)) {
-            $orderId = $request->transactionId;
+        \Log::info("multisafepay webhook received");
+
+        if (isset($request->transactionid)) {
+            $orderId = $request->transactionid;
+
             $orderPrefix = core()->getConfigData('sales.payment_methods.multisafepay.prefix');
-            $transactionId = explode($orderPrefix, $request->transactionid)[1];
+            $transactionId = explode($orderPrefix, $orderId)[1];
 
             $transaction = $this->multiSafepay->getPaymentStatusForOrder($orderId);
 

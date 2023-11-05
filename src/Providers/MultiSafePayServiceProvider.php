@@ -42,5 +42,7 @@ class MultiSafePayServiceProvider extends ServiceProvider
         $this->loadViewsFrom(__DIR__.'/../Resources/views', 'multisafepay');
 
         $this->app->bind('Webkul\Core\Core', 'Bagisto\MultiSafePay\Core');
+
+        $this->app->register(EventServiceProvider::class);
     }
 }

@@ -115,11 +115,14 @@ class OnePageController extends Controller
         }
 
         if (isset($request->transactionid)) {
-            $transactionId = $request->transactionid;
+            $orderId = $request->transactionid;
 
+            $orderPrefix = core()->getConfigData('sales.payment_methods.multisafepay.prefix');
+            $transactionId = explode($orderPrefix, $orderId)[1];
+            
             $order = $this->orderRepository->find($transactionId);
 
-            $transactionData = $this->multiSafepay->getPaymentStatusForOrder($order->id);
+            $transactionData = $this->multiSafepay->getPaymentStatusForOrder($orderId);
             $status = $transactionData->getStatus();
 
             if ($status === 'completed') {
@@ -128,6 +131,7 @@ class OnePageController extends Controller
                 }
 
                 if ($order->canInvoice()) {
+                    request()->merge([ 'can_create_transaction' => 1 ]);
                     $invoice = $this->invoiceRepository->create($this->prepareInvoiceData($order));
                 }
             }

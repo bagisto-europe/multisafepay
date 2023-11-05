@@ -101,8 +101,10 @@ class MultiSafePayController extends Controller
     {
         if (isset($request->transactionId)) {
             $orderId = $request->transactionId;
+            $orderPrefix = core()->getConfigData('sales.payment_methods.multisafepay.prefix');
+            $transactionId = explode($orderPrefix, $request->transactionid)[1];
 
-            $transaction = $this->multiSafepay->getPaymentStatusForOrder(core()->getConfigData('sales.payment_methods.multisafepay.prefix') . $orderId);
+            $transaction = $this->multiSafepay->getPaymentStatusForOrder($orderId);
 
             $status = $transaction->getStatus();
 

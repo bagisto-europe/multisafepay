@@ -118,6 +118,7 @@ class OnePageController extends Controller
             $orderId = $request->transactionid;
 
             $orderPrefix = core()->getConfigData('sales.payment_methods.multisafepay.prefix');
+            
             if (isset($orderPrefix)) {
                 $transactionId = explode($orderPrefix, $orderId)[1];
             } else {

@@ -118,7 +118,12 @@ class OnePageController extends Controller
             $orderId = $request->transactionid;
 
             $orderPrefix = core()->getConfigData('sales.payment_methods.multisafepay.prefix');
-            $transactionId = explode($orderPrefix, $orderId)[1];
+            
+            if (isset($orderPrefix)) {
+                $transactionId = explode($orderPrefix, $orderId)[1];
+            } else {
+                $transactionId = $request->transactionid;
+            }
             
             $order = $this->orderRepository->find($transactionId);
 
@@ -159,7 +164,7 @@ class OnePageController extends Controller
 
     public function storeInSession()
     {
-        $cart = \Cart::getCart();
+        $cart = Cart::getCart();
         if ($cart->payment->method === 'multisafepay') {
             $cartFirstItem = $cart->items->first();
             $cartFirstItem->update([

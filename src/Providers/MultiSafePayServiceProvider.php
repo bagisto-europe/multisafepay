@@ -35,7 +35,7 @@ class MultiSafePayServiceProvider extends ServiceProvider
         /* loaders */
         Route::middleware('web')->group(dirname(__DIR__).'/Routes/web.php');
         
-        //$this->loadRoutesFrom(dirname(__DIR__).'/Routes/web.php');
+        $this->loadRoutesFrom(dirname(__DIR__).'/Routes/api.php');
 
         $this->loadTranslationsFrom(__DIR__.'/../Resources/lang', 'multisafepay');
 

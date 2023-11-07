@@ -19,7 +19,7 @@ return [
                 'name'          => 'prefix',
                 'title'         => 'multisafepay::app.system.order-id-prefix',
                 'type'          => 'text',
-                'validation'    => 'required_if:active,1',
+                'info'          => 'multisafepay::app.system.order-id-prefix',
                 'channel_based' => true,
                 'locale_based'  => false,
             ],

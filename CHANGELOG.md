@@ -1,5 +1,11 @@
 # Changelog
 
+## Version 1.0.2
+
+### Bug Fixes
+
+- Override file instead of overriding routes.
+
 ## Version 1.0.1
 
 ### Bug Fixes

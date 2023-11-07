@@ -1,32 +1,41 @@
 {
-    "name": "bagisto-eu/multisafepay",
-    "description": "MultiSafepay Payment Method for Bagisto",
-    "type": "library",
-    "license": "MIT",
-    "authors": [
-      {
-        "name": "Bagisto Europe",
-        "email": "info@bagisto.eu"
-      }
-    ],
-    "autoload": {
-      "psr-4": {
-        "Bagisto\\MultiSafePay\\": "src/"
-      }
-    },
-    "config": {
-        "sort-packages": true
-    },
-    "extra": {
-        "laravel": {
-            "providers": [
-                "Bagisto\\MultiSafePay\\Providers\\MultiSafePayServiceProvider"
-            ]
-        }
-    },
-    "minimum-stability": "dev",
-    "prefer-stable": true,
-    "require": {
-      "multisafepay/sdk": "^2.0"
+  "name": "bagisto-eu/multisafepay",
+  "description": "MultiSafepay Payment Methods for Bagisto",
+  "type": "library",
+  "license": "MIT",
+  "keywords": [
+    "bagisto",
+    "laravel",
+    "multisafepay",
+    "payment-methods",
+    "bagisto-payment-methods"
+  ],
+  "authors": [
+    {
+      "name": "Bagisto Europe",
+      "email": "info@bagisto.eu"
+    }
+  ],
+  "homepage": "https://github.com/bagisto-europe/multisafepay",
+  "require": {
+    "multisafepay/php-sdk": "^5.11"
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "autoload": {
+    "psr-4": {
+      "Bagisto\\MultiSafePay\\": "src/"
+    }
+  },
+  "config": {
+    "sort-packages": true
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "Bagisto\\MultiSafePay\\Providers\\MultiSafePayServiceProvider"
+      ]
     }
   }
+  
+}

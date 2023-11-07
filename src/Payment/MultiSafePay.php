@@ -122,7 +122,14 @@ class MultiSafePay extends Payment
                 session(['order' => $order]);
 
                 $orderId = $order->id;
-                $randomOrderId = core()->getConfigData('sales.payment_methods.multisafepay.prefix') . $orderId;
+                $orderPrefix = core()->getConfigData('sales.payment_methods.multisafepay.prefix');
+
+
+                if (isset($orderPrefix)) {
+                    $randomOrderId = core()->getConfigData('sales.payment_methods.multisafepay.prefix') . $orderId;
+                } else {
+                    $randomOrderId = $orderId;
+                }
 
                 $multiSafepaySdk = new Sdk($this->apiKey, $this->productionMode ?? false);
 

@@ -1,6 +1,6 @@
 <div align="center">
-  <img src="https://www.multisafepay.com/fileadmin/template/img/multisafepay-logo.svg">
-  <h2>MultiSafepay Bagisto integration</h2>
+  <img src="https://bagisto.com/wp-content/themes/bagisto/images/logo.png">
+  <h2>MultiSafepay Extension</h2>
 </div>
 
 <div align="center">
@@ -9,7 +9,8 @@
 
 ## Introduction
 
-This package provides seamless integration of MultiSafepay, a leading payment services provider, into your Bagisto online store. With MultiSafepay, you can easily process transactions and collect payments from various local and international payment methods, giving your customers a smooth and secure checkout experience.
+This package provides seamless integration of MultiSafepay, a leading payment services provider, into your Bagisto online store.  
+With MultiSafepay, you can easily process transactions and collect payments from various local and international payment methods, giving your customers a smooth and secure checkout experience.
 
 For a detailed list of changes and updates, please refer to our [Changelog](CHANGELOG.md).
 

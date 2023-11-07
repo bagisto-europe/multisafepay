@@ -3,6 +3,7 @@
     "description": "MultiSafepay Payment Method for Bagisto",
     "type": "library",
     "version": "1.0.0",
+    "license": "MIT",
     "authors": [
       {
         "name": "Bagisto Europe",

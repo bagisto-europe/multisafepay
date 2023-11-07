@@ -36,6 +36,5 @@
         "Bagisto\\MultiSafePay\\Providers\\MultiSafePayServiceProvider"
       ]
     }
-  }
-  
+  }  
 }

@@ -36,5 +36,10 @@
         "Bagisto\\MultiSafePay\\Providers\\MultiSafePayServiceProvider"
       ]
     }
-  }  
+  },
+  "scripts": {
+    "post-install-cmd": [
+      "@php artisan vendor:publish --tag={multisafepay}--force"
+    ]
+  }
 }

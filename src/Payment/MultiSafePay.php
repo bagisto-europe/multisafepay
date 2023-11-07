@@ -2,6 +2,8 @@
 
 namespace Bagisto\MultiSafePay\Payment;
 
+use Illuminate\Support\Facades\Log;
+
 use MultiSafepay\Sdk;
 use MultiSafepay\Api\PaymentMethods\PaymentMethod;
 use MultiSafepay\ValueObject\Customer\Country;
@@ -141,22 +143,22 @@ class MultiSafePay extends Payment
                     ->addAddress($address)
                     ->addEmailAddress(new EmailAddress($order->customer_email))
                     ->addPhoneNumber(new PhoneNumber($order->addresses["0"]->phone));
-                //->addLocale('nl_NL');
 
                 $pluginDetails = (new PluginDetails())
-                    ->addPartner('Bagisto Europe')
                     ->addApplicationName('Bagisto')
                     ->addApplicationVersion(core()->version())
                     ->addPluginVersion($this->getPluginVersion());
 
                 $paymentOptions = (new PaymentOptions())
-                    // ->addNotificationUrl(route('multisafepay.webhook', $orderId))
+                    ->addNotificationUrl(route('multisafepay.webhook'))
+                    ->addNotificationMethod('POST')
                     ->addRedirectUrl(route('shop.checkout.onepage.success'))
                     ->addCancelUrl(route('shop.checkout.onepage.success'))
                     ->addCloseWindow(true);
 
                 $selectedGateway = '';
                 $orderItemAdditional = $order->items->first()->additional;
+                
                 if (isset($orderItemAdditional['payment'])) {
                     $selectedGateway = $orderItemAdditional['payment']['payment_method'];
                     $orderPayment = $order->payment;
@@ -164,7 +166,8 @@ class MultiSafePay extends Payment
                         'additional' => array_merge($orderPayment->additional ?? [], ['payment' => $orderItemAdditional['payment']])
                     ]);
                 }
-                \Log::info("selected gateway is $selectedGateway for order id: $orderId");
+                
+                Log::info("Selected gateway is $selectedGateway for order id: $orderId");
 
                 $orderRequest = (new OrderRequest())
                     ->addType('redirect')

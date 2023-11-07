@@ -13,6 +13,6 @@ use Bagisto\MultiSafePay\Controllers\OnePageController;
  Route::group(['middleware' => ['web','locale', 'theme', 'currency']], function () {
     Route::prefix('multisafepay')->group(function () {
         Route::get('payment-methods', [MultiSafePayController::class, 'showPaymentMethods'])->name('multisafepay.payment_methods');
-        Route::get('webhook/{orderId}', [MultiSafePayController::class, 'webhook'])->name('multisafepay.webhook');
+        //Route::post('webhook', [MultiSafePayController::class, 'webhook'])->name('multisafepay.webhook');
     });
 });

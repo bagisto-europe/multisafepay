@@ -19,7 +19,7 @@ return [
                 'name'          => 'prefix',
                 'title'         => 'multisafepay::app.system.order-id-prefix',
                 'type'          => 'text',
-                'info'          => 'This is optinal when you have multiple channels',
+                'info'          => 'multisafepay::app.system.order-id-prefix',
                 'channel_based' => true,
                 'locale_based'  => false,
             ],

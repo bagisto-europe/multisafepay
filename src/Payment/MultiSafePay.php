@@ -126,7 +126,7 @@ class MultiSafePay extends Payment
 
                 $multiSafepaySdk = new Sdk($this->apiKey, $this->productionMode ?? false);
 
-                $description = $order->channel_name . ' - Order ID #' . $orderId;
+                $description = '#' . $orderId;
 
                 $amount = new Money(round($cart->grand_total * 100), $cart->cart_currency_code);
 

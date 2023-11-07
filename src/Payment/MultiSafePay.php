@@ -2,6 +2,8 @@
 
 namespace Bagisto\MultiSafePay\Payment;
 
+use Illuminate\Support\Facades\Log;
+
 use MultiSafepay\Sdk;
 use MultiSafepay\Api\PaymentMethods\PaymentMethod;
 use MultiSafepay\ValueObject\Customer\Country;
@@ -119,13 +121,21 @@ class MultiSafePay extends Payment
             if ($order) {
                 session(['order' => $order]);
 
-                $orderId = $order->increment_id;
+                $orderId = $order->id;
+                $orderPrefix = core()->getConfigData('sales.payment_methods.multisafepay.prefix');
+
+
+                if (isset($orderPrefix)) {
+                    $randomOrderId = core()->getConfigData('sales.payment_methods.multisafepay.prefix') . $orderId;
+                } else {
+                    $randomOrderId = $orderId;
+                }
 
                 $multiSafepaySdk = new Sdk($this->apiKey, $this->productionMode ?? false);
 
-                $description = $order->channel_name . ' - Order ID #' . $orderId;
+                $description = '#' . $orderId;
 
-                $amount = new Money(round($cart->sub_total * 100), $cart->cart_currency_code);
+                $amount = new Money(round($cart->grand_total * 100), $cart->cart_currency_code);
 
                 $address = (new Address())
                     ->addStreetName($billingAddress->address1)
@@ -140,26 +150,38 @@ class MultiSafePay extends Payment
                     ->addAddress($address)
                     ->addEmailAddress(new EmailAddress($order->customer_email))
                     ->addPhoneNumber(new PhoneNumber($order->addresses["0"]->phone));
-                //->addLocale('nl_NL');
 
                 $pluginDetails = (new PluginDetails())
-                    ->addPartner('Bagisto Europe')
                     ->addApplicationName('Bagisto')
                     ->addApplicationVersion(core()->version())
                     ->addPluginVersion($this->getPluginVersion());
 
                 $paymentOptions = (new PaymentOptions())
-                    //->addNotificationUrl(route('multisafepay.webhook'))
+                    ->addNotificationUrl(route('multisafepay.webhook'))
+                    ->addNotificationMethod('POST')
                     ->addRedirectUrl(route('shop.checkout.onepage.success'))
                     ->addCancelUrl(route('shop.checkout.onepage.success'))
                     ->addCloseWindow(true);
 
+                $selectedGateway = '';
+                $orderItemAdditional = $order->items->first()->additional;
+                
+                if (isset($orderItemAdditional['payment'])) {
+                    $selectedGateway = $orderItemAdditional['payment']['payment_method'];
+                    $orderPayment = $order->payment;
+                    $orderPayment->update([
+                        'additional' => array_merge($orderPayment->additional ?? [], ['payment' => $orderItemAdditional['payment']])
+                    ]);
+                }
+                
+                Log::info("Selected gateway is $selectedGateway for order id: $orderId");
+
                 $orderRequest = (new OrderRequest())
                     ->addType('redirect')
-                    ->addOrderId($orderId)
+                    ->addOrderId($randomOrderId)
                     ->addDescriptionText($description)
                     ->addMoney($amount)
-                    ->addGatewayCode(session()->get('multipay_id'))
+                    ->addGatewayCode($selectedGateway)
                     ->addCustomer($customer)
                     ->addDelivery($customer)
                     ->addPluginDetails($pluginDetails)

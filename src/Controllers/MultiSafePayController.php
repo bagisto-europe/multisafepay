@@ -6,9 +6,7 @@ use Bagisto\MultiSafePay\Payment\MultiSafePay;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-
-use MultiSafepay\Sdk;
-use Webkul\Checkout\Facades\Cart;
+use Illuminate\Support\Facades\Log;
 
 use Webkul\Sales\Repositories\InvoiceRepository;
 use Webkul\Sales\Repositories\OrderRepository;
@@ -79,12 +77,10 @@ class MultiSafePayController extends Controller
     public function __construct(
         InvoiceRepository $invoiceRepository,
         OrderRepository $orderRepository,
-        OrderTransactionRepository $orderTransactionRepository,
         MultiSafePay $multiSafepay
     ) {
         $this->invoiceRepository = $invoiceRepository;
         $this->orderRepository = $orderRepository;
-        $this->orderTransactionRepository = $orderTransactionRepository;
         $this->multiSafepay = $multiSafepay;
 
         $this->apiKey  = core()->getConfigData('sales.payment_methods.multisafepay.apikey');
@@ -99,38 +95,40 @@ class MultiSafePayController extends Controller
      */
     public function webhook(Request $request)
     {
-        if (isset($request->transactionId)) {
-            $orderId = $request->transactionId;
+        Log::info("MultiSafePay webhook received");
 
-            $transaction = $this->multiSafepay->getPaymentStatusForOrder($orderId);
+        if (isset($request->transactionid)) {
+            $orderId = $request->transactionid;
 
-            $status = $transaction->getStatus();
-
-            $this->order = $this->orderRepository->find($orderId);
-
-            if ($this->order) {
-
-                if ($this->order->status = 'pending') {
-
-                    if ($status === 'completed') {
-                        $this->order->status = 'processing';
-
-                        if ($this->order->canInvoice()) {
-                            $this->invoiceRepository->create($this->prepareInvoiceData());
-                        }
-                    } elseif ($status === 'cancelled' || $status === 'void') {
-                        $this->orderRepository->cancel($transaction->getOrderId());
-                    }
-                };
-
-                $this->order->save();
-
-                // Acknowledge the notification by returning a response with HTTP status code 200
-                return response('OK', 200);
+            $orderPrefix = core()->getConfigData('sales.payment_methods.multisafepay.prefix');
+            
+            if (isset($orderPrefix)) {
+                $transactionId = explode($orderPrefix, $orderId)[1];
             } else {
-                // Invalid or incomplete notification, return an error response
-                return response('Invalid notification', 400);
+                $transactionId = $request->transactionid;
             }
+
+            $order = $this->orderRepository->find($transactionId);
+
+            $transactionData = $this->multiSafepay->getPaymentStatusForOrder($orderId);
+            $status = $transactionData->getStatus();
+
+            if ($status === 'completed') {
+                if ($order->status = 'pending') {
+                    $order->status = 'processing';
+                }
+
+                if ($order->canInvoice()) {
+                    request()->merge(['can_create_transaction' => 1]);
+                    $invoice = $this->invoiceRepository->create($this->prepareInvoiceData($order));
+                }
+            }
+
+            // Acknowledge the notification by returning a response with HTTP status code 200
+            return response('OK', 200);
+        } else {
+            // Invalid or incomplete notification, return an error response
+            return response('Invalid notification', 400);
         }
     }
 
@@ -156,8 +154,6 @@ class MultiSafePayController extends Controller
     {
         $data = collect($this->multiSafepay->getAvailablePaymentMethods());
 
-        
-        //return dd($data);
         return response()->json($data);
     }
 }

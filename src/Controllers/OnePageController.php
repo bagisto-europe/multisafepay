@@ -115,11 +115,19 @@ class OnePageController extends Controller
         }
 
         if (isset($request->transactionid)) {
-            $transactionId = $request->transactionid;
+            $orderId = $request->transactionid;
 
+            $orderPrefix = core()->getConfigData('sales.payment_methods.multisafepay.prefix');
+            
+            if (isset($orderPrefix)) {
+                $transactionId = explode($orderPrefix, $orderId)[1];
+            } else {
+                $transactionId = $request->transactionid;
+            }
+            
             $order = $this->orderRepository->find($transactionId);
 
-            $transactionData = $this->multiSafepay->getPaymentStatusForOrder($order->id);
+            $transactionData = $this->multiSafepay->getPaymentStatusForOrder($orderId);
             $status = $transactionData->getStatus();
 
             if ($status === 'completed') {
@@ -128,6 +136,7 @@ class OnePageController extends Controller
                 }
 
                 if ($order->canInvoice()) {
+                    request()->merge([ 'can_create_transaction' => 1 ]);
                     $invoice = $this->invoiceRepository->create($this->prepareInvoiceData($order));
                 }
             }
@@ -155,7 +164,19 @@ class OnePageController extends Controller
 
     public function storeInSession()
     {
-        session()->put('multipay_id', request()->id);
+        $cart = Cart::getCart();
+        if ($cart->payment->method === 'multisafepay') {
+            $cartFirstItem = $cart->items->first();
+            $cartFirstItem->update([
+                'additional' => [
+                    ...$cartFirstItem->additional,
+                    ...[
+                        'payment' => request()->all()
+                    ]
+                ]
+            ]);
+        }
+
         return response()->json(['status' => true]);
     }
 }

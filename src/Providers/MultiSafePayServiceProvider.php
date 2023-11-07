@@ -35,11 +35,20 @@ class MultiSafePayServiceProvider extends ServiceProvider
         /* loaders */
         Route::middleware('web')->group(dirname(__DIR__).'/Routes/web.php');
         
-        //$this->loadRoutesFrom(dirname(__DIR__).'/Routes/web.php');
+        $this->loadRoutesFrom(dirname(__DIR__).'/Routes/api.php');
 
         $this->loadTranslationsFrom(__DIR__.'/../Resources/lang', 'multisafepay');
 
         $this->loadViewsFrom(__DIR__.'/../Resources/views', 'multisafepay');
 
+        $this->app->bind('Webkul\Core\Core', 'Bagisto\MultiSafePay\Core');
+
+        $this->app->register(EventServiceProvider::class);
+
+        if ($this->app->runningInConsole()) {
+            $this->publishes([
+                __DIR__.'/../Resources/views' => $this->app->resourcePath('themes/default/views'),
+            ], 'multisafepay');
+        }
     }
 }

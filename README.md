@@ -4,12 +4,16 @@
 </div>
 
 <div align="center">
-  <img alt="Packagist Downloads" src="https://img.shields.io/packagist/dt/bagisto-eu/multisafepay"> <img alt="GitHub all releases" src="https://img.shields.io/github/downloads/bagisto-europe/multisafepay/total"> <img alt="GitHub" src="https://img.shields.io/github/license/bagisto-europe/multisafepay">
+    <img alt="Latest Stable Version" src="https://img.shields.io/packagist/v/bagisto-eu/multisafepay"> <img alt="Packagist Downloads" src="https://img.shields.io/packagist/dt/bagisto-eu/multisafepay"> <img alt="GitHub" src="https://img.shields.io/github/license/bagisto-europe/multisafepay">
 </div>
 
 ## Introduction
 
 This package provides seamless integration of MultiSafepay, a leading payment services provider, into your Bagisto-based online store. With MultiSafepay, you can easily process transactions and collect payments from various local and international payment methods, giving your customers a smooth and secure checkout experience.
+
+For a detailed list of changes and updates, please refer to our [Changelog](CHANGELOG.md).
+
+![payment-methods](docs/payment-methods.png)
 
 ## Getting Started
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## Version 1.0.1
+
+### Bug Fixes
+
+- Added the missing license information to the composer file.
+
 ## Version 1.0.0 (Initial Release)
 
 ### Features

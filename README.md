@@ -4,7 +4,7 @@
 </div>
 
 <div align="center">
-  <img alt="Packagist Downloads" src="https://img.shields.io/packagist/dt/bagisto-eu/multisafepay"> <img alt="GitHub all releases" src="https://img.shields.io/github/downloads/bagisto-europe/multisafepay/total"> <img alt="GitHub" src="https://img.shields.io/github/license/bagisto-europe/multisafepay">
+    <img alt="Latest Stable Version" src="https://img.shields.io/packagist/v/bagisto-eu/multisafepay"> <img alt="Packagist Downloads" src="https://img.shields.io/packagist/dt/bagisto-eu/multisafepay"> <img alt="GitHub" src="https://img.shields.io/github/license/bagisto-europe/multisafepay">
 </div>
 
 ## Introduction

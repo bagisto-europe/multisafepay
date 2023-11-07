@@ -2,7 +2,7 @@
     "name": "bagisto-eu/multisafepay",
     "description": "MultiSafepay Payment Method for Bagisto",
     "type": "library",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "license": "MIT",
     "authors": [
       {

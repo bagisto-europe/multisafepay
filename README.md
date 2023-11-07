@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://bagisto.com/wp-content/themes/bagisto/images/logo.png">
+  <a href="https://bagisto.eu"><img src="https://bagisto.com/wp-content/themes/bagisto/images/logo.png"></a>
   <h2>MultiSafepay Extension</h2>
 </div>
 

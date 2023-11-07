@@ -5,6 +5,8 @@
 ### Bug Fixes
 
 - Added the missing license information to the composer file.
+- Fixed sdk version in composer.
+- Fixed issues caused by order id prefix.
 
 ## Version 1.0.0 (Initial Release)
 

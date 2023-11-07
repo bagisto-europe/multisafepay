@@ -1,5 +1,11 @@
 # Changelog
 
+## Version 1.0.3
+
+### Bugfixes
+
+- Removed irrelevant changes
+
 ## Version 1.0.2
 
 ### Bug Fixes

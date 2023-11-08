@@ -116,50 +116,14 @@ class OnePageController extends Controller
 
         if (isset($request->transactionid)) {
             $orderId = $request->transactionid;
-
             $orderPrefix = core()->getConfigData('sales.payment_methods.multisafepay.prefix');
             
-            if (isset($orderPrefix)) {
-                $transactionId = explode($orderPrefix, $orderId)[1];
-            } else {
-                $transactionId = $request->transactionid;
-            }
-            
+            $transactionId = !empty($orderPrefix) ? explode($orderPrefix, $orderId)[1] : $orderId;
+
             $order = $this->orderRepository->find($transactionId);
-
-            $transactionData = $this->multiSafepay->getPaymentStatusForOrder($orderId);
-            $status = $transactionData->getStatus();
-
-            if ($status === 'completed') {
-                if ($order->status = 'pending') {
-                    $order->status = 'processing';
-                }
-
-                if ($order->canInvoice()) {
-                    request()->merge([ 'can_create_transaction' => 1 ]);
-                    $invoice = $this->invoiceRepository->create($this->prepareInvoiceData($order));
-                }
-            }
         }
 
         return view('shop::checkout.success', compact('order'));
-    }
-
-    /**
-     * Prepare invoice data from order.
-     *
-     * @param  \Webkul\Sales\Models\Order  $order
-     * @return array
-     */
-    protected function prepareInvoiceData($order)
-    {
-        $invoiceData = ['order_id' => $order->id];
-
-        foreach ($order->items as $item) {
-            $invoiceData['invoice']['items'][$item->id] = $item->qty_to_invoice;
-        }
-
-        return $invoiceData;
     }
 
     public function storeInSession()

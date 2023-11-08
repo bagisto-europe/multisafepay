@@ -21,19 +21,25 @@ For a detailed list of changes and updates, please refer to our [Changelog](CHAN
 To integrate MultiSafepay into your Bagisto store using this package, follow these steps:
 
 1. [Create an account](https://merchant.multisafepay.com/signup?partnerid=10840869) or login to obtain your unique API key.
-2. Install the Bagisto MultiSafepay package by running the following command:
+2. Install the package by running the following command:
 
 ```bash
 composer require bagisto-eu/multisafepay
 ```
 
-3. Run the following command to publish the MultiSafePay assets:
+3. Run the following command to publish the MultiSafePay assets 
 
 ```bash
 php artisan vendor:publish --force --tag=multisafepay
 ```
 
-4. Access your Bagisto store's admin panel to configure the MultiSafepay settings. Input your unique API key to activate the integration.
+4. Run the following command to cache the config and routes
+
+```bash
+php artisan optimize
+```
+
+5. Access your Bagisto store's admin panel to configure the MultiSafepay settings. Input your unique API key to activate the integration.
 
 ## Support
 If you encounter any issues or have questions about the MultiSafepay integration package for Bagisto E-commerce, please reach out to our support team at [info@bagisto.eu](mailto:info@bagisto.eu). We're here to assist you and ensure a smooth integration process.  

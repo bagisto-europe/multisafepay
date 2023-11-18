@@ -179,8 +179,8 @@ class MultiSafePay extends Payment
                 $paymentOptions = (new PaymentOptions())
                     ->addNotificationUrl(route('multisafepay.webhook'))
                     ->addNotificationMethod('POST')
-                    ->addRedirectUrl(route('shop.checkout.onepage.success'))
-                    ->addCancelUrl(route('shop.checkout.onepage.success'))
+                    ->addRedirectUrl(route('multisafepay.shop.checkout.onepage.success'))
+                    ->addCancelUrl(route('multisafepay.shop.checkout.onepage.success'))
                     ->addCloseWindow(true);
 
                 $items = [];

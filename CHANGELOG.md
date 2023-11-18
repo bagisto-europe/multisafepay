@@ -1,5 +1,11 @@
 # Changelog
 
+## Version 1.0.5
+
+### Added
+- Added a event listener for shipments.
+- Added shopping cart data in the transaction request
+
 ## Version 1.0.4
 
 ### Bugfixes

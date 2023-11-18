@@ -109,7 +109,7 @@ class MultiSafePayController extends Controller
 
                 $transactionData = $this->multiSafepay->getPaymentStatusForOrder($orderId);
                                 
-                $status = $transactionData->getStatus();               
+                $status = $transactionData->getStatus();
                 
                 if ($status === 'completed') {
                     $amount = $transactionData->getAmount();

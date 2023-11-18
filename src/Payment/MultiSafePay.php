@@ -115,9 +115,11 @@ class MultiSafePay extends Payment
     public function getRedirectUrl()
     {
         if ($this->apiKey) {
-            $billingAddress = $cart->billing_address;
-            
             $cart = $this->getCart();
+
+            $billingAddress = $cart->billing_address;
+            $shippingAddress = $cart->shipping_address;
+                        
             $cartItems = $this->getCartItems();
             
             $order = $this->orderRepository->create(Cart::prepareDataForOrder());
@@ -148,10 +150,24 @@ class MultiSafePay extends Payment
                     ->addState($billingAddress->state)
                     ->addCountry(new Country($billingAddress->country));
 
+                $shippingData = (new Address())
+                    ->addStreetName($shippingAddress->address1)
+                    ->addZipCode($shippingAddress->postcode)
+                    ->addCity($shippingAddress->city)
+                    ->addState($shippingAddress->state)
+                    ->addCountry(new Country($shippingAddress->country));
+
                 $customer = (new CustomerDetails())
                     ->addFirstName($billingAddress->first_name)
                     ->addLastName($billingAddress->last_name)
                     ->addAddress($address)
+                    ->addEmailAddress(new EmailAddress($order->customer_email))
+                    ->addPhoneNumber(new PhoneNumber($order->addresses["0"]->phone));
+                
+                $shipping = (new CustomerDetails())
+                    ->addFirstName($shippingAddress->first_name)
+                    ->addLastName($shippingAddress->last_name)
+                    ->addAddress($shippingData)
                     ->addEmailAddress(new EmailAddress($order->customer_email))
                     ->addPhoneNumber(new PhoneNumber($order->addresses["0"]->phone));
 
@@ -198,7 +214,7 @@ class MultiSafePay extends Payment
                     ->addMoney($amount)
                     ->addGatewayCode($selectedGateway)
                     ->addCustomer($customer)
-                    ->addDelivery($customer)
+                    ->addDelivery($shipping)
                     ->addPluginDetails($pluginDetails)
                     ->addPaymentOptions($paymentOptions)
                     ->addShoppingCart(new ShoppingCart($items));

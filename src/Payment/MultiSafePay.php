@@ -17,6 +17,8 @@ use MultiSafepay\Api\Transactions\OrderRequest\Arguments\CustomerDetails;
 use MultiSafepay\Api\Transactions\OrderRequest\Arguments\PluginDetails;
 use MultiSafepay\Api\Transactions\OrderRequest\Arguments\PaymentOptions;
 use MultiSafepay\Api\Transactions\OrderRequest;
+use MultiSafepay\Api\Transactions\OrderRequest\Arguments\ShoppingCart;
+use MultiSafepay\Api\Transactions\OrderRequest\Arguments\ShoppingCart\Item;
 
 use Webkul\Checkout\Facades\Cart;
 use Webkul\Payment\Payment\Payment;
@@ -113,9 +115,11 @@ class MultiSafePay extends Payment
     public function getRedirectUrl()
     {
         if ($this->apiKey) {
-            $cart = $this->getCart();
             $billingAddress = $cart->billing_address;
-
+            
+            $cart = $this->getCart();
+            $cartItems = $this->getCartItems();
+            
             $order = $this->orderRepository->create(Cart::prepareDataForOrder());
 
             if ($order) {
@@ -163,6 +167,17 @@ class MultiSafePay extends Payment
                     ->addCancelUrl(route('shop.checkout.onepage.success'))
                     ->addCloseWindow(true);
 
+                $items = [];
+
+                foreach ($cartItems as $cartItem) {
+                    $items[] = (new Item())
+                        ->addName($cartItem['name'])
+                        ->addUnitPrice(new Money(round($cartItem['price'] * 100), $cart->cart_currency_code))
+                        ->addQuantity($cartItem['quantity'])
+                        ->addTaxRate(number_format((float)$cartItem['tax_percent'], 2) ?? 0)
+                        ->addMerchantItemId($cartItem['sku']);
+                }
+
                 $selectedGateway = '';
                 $orderItemAdditional = $order->items->first()->additional;
                 
@@ -185,7 +200,8 @@ class MultiSafePay extends Payment
                     ->addCustomer($customer)
                     ->addDelivery($customer)
                     ->addPluginDetails($pluginDetails)
-                    ->addPaymentOptions($paymentOptions);
+                    ->addPaymentOptions($paymentOptions)
+                    ->addShoppingCart(new ShoppingCart($items));
 
                 Cart::deActivateCart();
 

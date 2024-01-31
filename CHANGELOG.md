@@ -1,5 +1,23 @@
 # Changelog
 
+## Version 1.0.5
+
+### Added
+- Added a event listener for shipments.
+- Added shopping cart data in the transaction request
+
+## Version 1.0.4
+
+### Bugfixes
+
+- Fixed webhook returns error 500.
+
+## Version 1.0.3
+
+### Bugfixes
+
+- Removed irrelevant changes
+
 ## Version 1.0.2
 
 ### Bug Fixes

@@ -2,5 +2,5 @@
 
 return [
     'name'    => 'Bagisto MultiSafePay',
-    'version' => '1.0.1',
+    'version' => '1.0.4',
 ];

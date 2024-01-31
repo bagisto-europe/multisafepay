@@ -95,39 +95,62 @@ class MultiSafePayController extends Controller
      */
     public function webhook(Request $request)
     {
-        Log::info("MultiSafePay webhook received");
-
         if (isset($request->transactionid)) {
             $orderId = $request->transactionid;
 
             $orderPrefix = core()->getConfigData('sales.payment_methods.multisafepay.prefix');
             
-            if (isset($orderPrefix)) {
-                $transactionId = explode($orderPrefix, $orderId)[1];
-            } else {
-                $transactionId = $request->transactionid;
-            }
+            $transactionId = !empty($orderPrefix) ? explode($orderPrefix, $orderId)[1] : $orderId;  
 
             $order = $this->orderRepository->find($transactionId);
 
-            $transactionData = $this->multiSafepay->getPaymentStatusForOrder($orderId);
-            $status = $transactionData->getStatus();
+            if ($order) {
+                Log::info("MultiSafePay notification received for order id:" . $transactionId);
 
-            if ($status === 'completed') {
-                if ($order->status = 'pending') {
-                    $order->status = 'processing';
-                }
+                $transactionData = $this->multiSafepay->getPaymentStatusForOrder($orderId);
+                                
+                $status = $transactionData->getStatus();
+                
+                if ($status === 'completed') {
+                    $amount = $transactionData->getAmount();
+                    $orderAmount = round($order->base_grand_total * 100);
 
-                if ($order->canInvoice()) {
-                    request()->merge(['can_create_transaction' => 1]);
-                    $invoice = $this->invoiceRepository->create($this->prepareInvoiceData($order));
+                    if ($amount === $orderAmount) {
+                        if ($order->status === 'pending') {
+
+                            $order->status = 'processing';
+                            $order->save();
+                        }
+
+                        if ($order->canInvoice()) {
+                            request()->merge(['can_create_transaction' => 1]);
+                            
+                            $this->invoiceRepository->create($this->prepareInvoiceData($order));
+                        } else {
+                            $invoice = $this->invoiceRepository->findOneWhere(['order_id' => $order->id]);
+    
+                            if ($invoice) {
+                                $invoice->state = 'paid';
+                                $invoice->save();
+                            }
+                        }
+
+                    }
+                } else {
+                    if ($order->canInvoice()) {
+                        request()->merge(['can_create_transaction' => 1]);
+
+                        $orderStatus = $order->status !== 'pending' ? $order->status : 'pending';
+                        
+                        $this->invoiceRepository->create($this->prepareInvoiceData($order), 'pending', $orderStatus);
+                    }
                 }
+                
+                return response('OK', 200);
+            } else {
+                return response('Order not found', 400);
             }
-
-            // Acknowledge the notification by returning a response with HTTP status code 200
-            return response('OK', 200);
         } else {
-            // Invalid or incomplete notification, return an error response
             return response('Invalid notification', 400);
         }
     }
@@ -137,13 +160,13 @@ class MultiSafePayController extends Controller
      *
      * @return array
      */
-    public function prepareInvoiceData()
+    public function prepareInvoiceData($order)
     {
         $invoiceData = [
-            "order_id" => $this->order->id
+            "order_id" => $order->id
         ];
 
-        foreach ($this->order->items as $item) {
+        foreach ($order->items as $item) {
             $invoiceData['invoice']['items'][$item->id] = $item->qty_to_invoice;
         }
 

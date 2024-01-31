@@ -6,6 +6,7 @@ use Bagisto\MultiSafePay\Payment\MultiSafePay;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Log;
 
 use Webkul\Checkout\Facades\Cart;
 use Webkul\Sales\Repositories\InvoiceRepository;
@@ -33,81 +34,17 @@ class OnePageController extends Controller
     }
 
     /**
-     * Display a listing of the resource.
+     * Handle the success callback after a MultiSafepay transaction.
      *
-     * @return \Illuminate\View\View
-     */
-    public function index()
-    {
-        Event::dispatch('checkout.load.index');
-
-        /**
-         * If guest checkout is not allowed then redirect back to the cart page
-         */
-        if (
-            !auth()->guard('customer')->check()
-            && !core()->getConfigData('catalog.products.guest_checkout.allow_guest_checkout')
-        ) {
-            return redirect()->route('shop.customer.session.index');
-        }
-
-        /**
-         * If user is suspended then redirect back to the cart page
-         */
-        if (auth()->guard('customer')->user()?->is_suspended) {
-            session()->flash('warning', trans('shop::app.checkout.cart.suspended-account-message'));
-
-            return redirect()->route('shop.checkout.cart.index');
-        }
-
-        /**
-         * If cart has errors then redirect back to the cart page
-         */
-        if (Cart::hasError()) {
-            return redirect()->route('shop.checkout.cart.index');
-        }
-
-        $cart = Cart::getCart();
-
-        /**
-         * If cart is has downloadable items and customer is not logged in
-         * then redirect back to the cart page
-         */
-        if (
-            !auth()->guard('customer')->check()
-            && ($cart->hasDownloadableItems()
-                || !$cart->hasGuestCheckoutItems()
-            )
-        ) {
-            return redirect()->route('shop.customer.session.index');
-        }
-
-        /**
-         * If cart minimum order amount is not satisfied then redirect back to the cart page
-         */
-        $minimumOrderAmount = (float) core()->getConfigData('sales.order_settings.minimum_order.minimum_order_amount') ?: 0;
-
-        if (!$cart->checkMinimumOrder()) {
-            session()->flash('warning', trans('shop::app.checkout.cart.minimum-order-message', [
-                'amount' => core()->currency($minimumOrderAmount)
-            ]));
-
-            return redirect()->back();
-        }
-
-        /**
-         * Get all payment methods from MultiSafePay
-         */
-        $multisafepayPayMethods = collect($this->multiSafepay->getAvailablePaymentMethods());
-
-        return view('multisafepay::checkout.onepage.index', compact('multisafepayPayMethods'));
-    }
-
-    /**
-     * Order success page.
+     * This method is responsible for processing the success callback from MultiSafepay
+     * after a transaction. It checks for the presence of a valid order in the session,
+     * retrieves transaction details, and updates the order status and creates an invoice
+     * based on the transaction status.
      *
+     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\View\View|\Illuminate\Http\RedirectResponse
      */
+
     public function success(Request $request)
     {
         if (!$order = session('order')) {
@@ -116,28 +53,49 @@ class OnePageController extends Controller
 
         if (isset($request->transactionid)) {
             $orderId = $request->transactionid;
-
             $orderPrefix = core()->getConfigData('sales.payment_methods.multisafepay.prefix');
-            
-            if (isset($orderPrefix)) {
-                $transactionId = explode($orderPrefix, $orderId)[1];
-            } else {
-                $transactionId = $request->transactionid;
-            }
-            
+
+            $transactionId = !empty($orderPrefix) ? explode($orderPrefix, $orderId)[1] : $orderId;
+
             $order = $this->orderRepository->find($transactionId);
 
+            Log::info("MultiSafePay notification received for order id:" . $transactionId);
+
             $transactionData = $this->multiSafepay->getPaymentStatusForOrder($orderId);
+
             $status = $transactionData->getStatus();
 
             if ($status === 'completed') {
-                if ($order->status = 'pending') {
-                    $order->status = 'processing';
-                }
+                $amount = $transactionData->getAmount();
+                $orderAmount = round($order->base_grand_total * 100);
 
+                if ($amount === $orderAmount) {
+                    if ($order->status === 'pending') {
+
+                        $order->status = 'processing';
+                        $order->save();
+                    }
+
+                    if ($order->canInvoice()) {
+                        request()->merge(['can_create_transaction' => 1]);
+
+                        $this->invoiceRepository->create($this->prepareInvoiceData($order));
+                    } else {
+                        $invoice = $this->invoiceRepository->findOneWhere(['order_id' => $order->id]);
+
+                        if ($invoice) {
+                            $invoice->state = 'paid';
+                            $invoice->save();
+                        }
+                    }
+                }
+            } else {
                 if ($order->canInvoice()) {
-                    request()->merge([ 'can_create_transaction' => 1 ]);
-                    $invoice = $this->invoiceRepository->create($this->prepareInvoiceData($order));
+                    request()->merge(['can_create_transaction' => 1]);
+
+                    $orderStatus = $order->status !== 'pending' ? $order->status : 'pending';
+
+                    $this->invoiceRepository->create($this->prepareInvoiceData($order), 'pending', $orderStatus);
                 }
             }
         }
@@ -146,22 +104,15 @@ class OnePageController extends Controller
     }
 
     /**
-     * Prepare invoice data from order.
+     * Store payment information in session for MultiSafepay.
      *
-     * @param  \Webkul\Sales\Models\Order  $order
-     * @return array
+     * This method is responsible for storing payment information related to MultiSafepay
+     * in the session. It checks if the current payment method in the cart is MultiSafepay,
+     * and if so, it updates the additional information for the first item in the cart
+     * with the payment details from the request.
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
-    protected function prepareInvoiceData($order)
-    {
-        $invoiceData = ['order_id' => $order->id];
-
-        foreach ($order->items as $item) {
-            $invoiceData['invoice']['items'][$item->id] = $item->qty_to_invoice;
-        }
-
-        return $invoiceData;
-    }
-
     public function storeInSession()
     {
         $cart = Cart::getCart();
@@ -178,5 +129,23 @@ class OnePageController extends Controller
         }
 
         return response()->json(['status' => true]);
+    }
+
+    /**
+     * Prepares invoice data
+     *
+     * @return array
+     */
+    public function prepareInvoiceData($order)
+    {
+        $invoiceData = [
+            "order_id" => $order->id
+        ];
+
+        foreach ($order->items as $item) {
+            $invoiceData['invoice']['items'][$item->id] = $item->qty_to_invoice;
+        }
+
+        return $invoiceData;
     }
 }

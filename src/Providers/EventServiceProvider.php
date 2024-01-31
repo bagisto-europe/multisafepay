@@ -15,5 +15,8 @@ class EventServiceProvider extends ServiceProvider
         'sales.refund.save.after' => [
             'Bagisto\MultiSafePay\Listeners\MultiSafePayListener@afterRefundGenerated',
         ],
+        'sales.shipment.save.after' => [
+            'Bagisto\MultiSafePay\Listeners\MultiSafePayListener@afterOrderShipped',
+        ]
     ];
 }

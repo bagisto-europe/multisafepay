@@ -17,6 +17,8 @@ use MultiSafepay\Api\Transactions\OrderRequest\Arguments\CustomerDetails;
 use MultiSafepay\Api\Transactions\OrderRequest\Arguments\PluginDetails;
 use MultiSafepay\Api\Transactions\OrderRequest\Arguments\PaymentOptions;
 use MultiSafepay\Api\Transactions\OrderRequest;
+use MultiSafepay\Api\Transactions\OrderRequest\Arguments\ShoppingCart;
+use MultiSafepay\Api\Transactions\OrderRequest\Arguments\ShoppingCart\Item;
 
 use Webkul\Checkout\Facades\Cart;
 use Webkul\Payment\Payment\Payment;
@@ -114,8 +116,12 @@ class MultiSafePay extends Payment
     {
         if ($this->apiKey) {
             $cart = $this->getCart();
-            $billingAddress = $cart->billing_address;
 
+            $billingAddress = $cart->billing_address;
+            $shippingAddress = $cart->shipping_address;
+                        
+            $cartItems = $this->getCartItems();
+            
             $order = $this->orderRepository->create(Cart::prepareDataForOrder());
 
             if ($order) {
@@ -144,10 +150,24 @@ class MultiSafePay extends Payment
                     ->addState($billingAddress->state)
                     ->addCountry(new Country($billingAddress->country));
 
+                $shippingData = (new Address())
+                    ->addStreetName($shippingAddress->address1)
+                    ->addZipCode($shippingAddress->postcode)
+                    ->addCity($shippingAddress->city)
+                    ->addState($shippingAddress->state)
+                    ->addCountry(new Country($shippingAddress->country));
+
                 $customer = (new CustomerDetails())
                     ->addFirstName($billingAddress->first_name)
                     ->addLastName($billingAddress->last_name)
                     ->addAddress($address)
+                    ->addEmailAddress(new EmailAddress($order->customer_email))
+                    ->addPhoneNumber(new PhoneNumber($order->addresses["0"]->phone));
+                
+                $shipping = (new CustomerDetails())
+                    ->addFirstName($shippingAddress->first_name)
+                    ->addLastName($shippingAddress->last_name)
+                    ->addAddress($shippingData)
                     ->addEmailAddress(new EmailAddress($order->customer_email))
                     ->addPhoneNumber(new PhoneNumber($order->addresses["0"]->phone));
 
@@ -159,9 +179,20 @@ class MultiSafePay extends Payment
                 $paymentOptions = (new PaymentOptions())
                     ->addNotificationUrl(route('multisafepay.webhook'))
                     ->addNotificationMethod('POST')
-                    ->addRedirectUrl(route('shop.checkout.onepage.success'))
-                    ->addCancelUrl(route('shop.checkout.onepage.success'))
+                    ->addRedirectUrl(route('multisafepay.shop.checkout.onepage.success'))
+                    ->addCancelUrl(route('multisafepay.shop.checkout.onepage.success'))
                     ->addCloseWindow(true);
+
+                $items = [];
+
+                foreach ($cartItems as $cartItem) {
+                    $items[] = (new Item())
+                        ->addName($cartItem['name'])
+                        ->addUnitPrice(new Money(round($cartItem['price'] * 100), $cart->cart_currency_code))
+                        ->addQuantity($cartItem['quantity'])
+                        ->addTaxRate(number_format((float)$cartItem['tax_percent'], 2) ?? 0)
+                        ->addMerchantItemId($cartItem['sku']);
+                }
 
                 $selectedGateway = '';
                 $orderItemAdditional = $order->items->first()->additional;
@@ -183,9 +214,10 @@ class MultiSafePay extends Payment
                     ->addMoney($amount)
                     ->addGatewayCode($selectedGateway)
                     ->addCustomer($customer)
-                    ->addDelivery($customer)
+                    ->addDelivery($shipping)
                     ->addPluginDetails($pluginDetails)
-                    ->addPaymentOptions($paymentOptions);
+                    ->addPaymentOptions($paymentOptions)
+                    ->addShoppingCart(new ShoppingCart($items));
 
                 Cart::deActivateCart();
 

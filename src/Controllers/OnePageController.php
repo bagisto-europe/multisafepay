@@ -71,7 +71,6 @@ class OnePageController extends Controller
 
                 if ($amount === $orderAmount) {
                     if ($order->status === 'pending') {
-
                         $order->status = 'processing';
                         $order->save();
                     }
@@ -88,14 +87,6 @@ class OnePageController extends Controller
                             $invoice->save();
                         }
                     }
-                }
-            } else {
-                if ($order->canInvoice()) {
-                    request()->merge(['can_create_transaction' => 1]);
-
-                    $orderStatus = $order->status !== 'pending' ? $order->status : 'pending';
-
-                    $this->invoiceRepository->create($this->prepareInvoiceData($order), 'pending', $orderStatus);
                 }
             }
         }

@@ -1,5 +1,10 @@
 # Changelog
 
+## Version 1.0.6
+
+### Bugfixes
+- By canceling the payment, the invoice is created automatically.
+
 ## Version 1.0.5
 
 ### Added

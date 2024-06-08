@@ -22,6 +22,7 @@ use MultiSafepay\Api\Transactions\OrderRequest\Arguments\ShoppingCart\Item;
 
 use Webkul\Checkout\Facades\Cart;
 use Webkul\Payment\Payment\Payment;
+use Webkul\Sales\Transformers\OrderResource;
 use Webkul\Sales\Repositories\OrderRepository;
 
 class MultiSafePay extends Payment
@@ -80,12 +81,13 @@ class MultiSafePay extends Payment
         $paymentMethods = $multiSafepaySdk->getPaymentMethodManager()->getPaymentMethods();
 
         $result = [];
-
         foreach ($paymentMethods as $paymentMethod) {
             $result[] = [
                 'id' => $paymentMethod->getId(),
-                'name' => $paymentMethod->getName(),
-                'logo' => $paymentMethod-> getLargeIconUrl(),
+                'method' => $paymentMethod->getId(),
+                'method_title' => $paymentMethod->getName(),
+                'description' => $paymentMethod->getName(),
+                'image' => $paymentMethod-> getLargeIconUrl(),
             ];
         }
 
@@ -121,8 +123,7 @@ class MultiSafePay extends Payment
             $shippingAddress = $cart->shipping_address;
                         
             $cartItems = $this->getCartItems();
-            
-            $order = $this->orderRepository->create(Cart::prepareDataForOrder());
+            $order = $this->orderRepository->create((new OrderResource($cart))->jsonSerialize());
 
             if ($order) {
                 session(['order' => $order]);
@@ -138,14 +139,14 @@ class MultiSafePay extends Payment
                 $amount = new Money(round($cart->grand_total * 100), $cart->cart_currency_code);
 
                 $address = (new Address())
-                    ->addStreetName($billingAddress->address1)
+                    ->addStreetName($billingAddress->address)
                     ->addZipCode($billingAddress->postcode)
                     ->addCity($billingAddress->city)
                     ->addState($billingAddress->state)
                     ->addCountry(new Country($billingAddress->country));
 
                 $shippingData = (new Address())
-                    ->addStreetName($shippingAddress->address1)
+                    ->addStreetName($shippingAddress->address)
                     ->addZipCode($shippingAddress->postcode)
                     ->addCity($shippingAddress->city)
                     ->addState($shippingAddress->state)

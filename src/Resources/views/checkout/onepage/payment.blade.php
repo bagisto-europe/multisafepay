@@ -201,24 +201,24 @@
                 store(selectedMethod) {
                     this.$emit('processing', 'review');
 
-                    this.$axios.post("{{ route('shop.checkout.onepage.multipay') }}", {
-                        payment_method: selectedMethod.payment_method,
-                        payment_method_title: selectedMethod.payment_method_title
-                    });
-
                     this.$axios.post("{{ route('shop.checkout.onepage.payment_methods.store') }}", {
                             payment: selectedMethod
                         })
                         .then(response => {
-                            this.$emit('processed', response.data.cart);
-
-                            // Used in mobile view. 
-                            if (window.innerWidth <= 768) {
-                                window.scrollTo({
-                                    top: document.body.scrollHeight,
-                                    behavior: 'smooth'
-                                });
-                            }
+                            this.$axios.post("{{ route('shop.checkout.onepage.multipay') }}", {
+                                payment_method: selectedMethod.payment_method,
+                                payment_method_title: selectedMethod.payment_method_title
+                            }).then(result => {
+                                this.$emit('processed', response.data.cart);
+    
+                                // Used in mobile view. 
+                                if (window.innerWidth <= 768) {
+                                    window.scrollTo({
+                                        top: document.body.scrollHeight,
+                                        behavior: 'smooth'
+                                    });
+                                }
+                            });
                         })
                         .catch(error => {
                             this.$emit('processing', 'payment');

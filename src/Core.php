@@ -14,7 +14,7 @@ class Core extends WebkulCore
      * @param  string|null  $locale
      * @return mixed
      */
-    public function getConfigData($field, $channel = null, $locale = null)
+    public function getConfigData(string $field, ?string $currentChannelCode = null, ?string $currentLocaleCode = null): mixed
     {
         if (
             $field === "sales.payment_methods.multisafepay.title"
@@ -34,7 +34,7 @@ class Core extends WebkulCore
         ) {
             return $additionalPaymentInfo['payment_method_title'];
         } else {
-            return parent::getConfigData($field, $channel = null, $locale = null);
+            return system_config()->getConfigData($field, $currentChannelCode, $currentLocaleCode);
         }
     }
 }

@@ -32,7 +32,7 @@ class Core extends WebkulCore
             && ($additionalPaymentInfo = $order->payment->additional['payment'] ?? false)
             && $additionalPaymentInfo
         ) {
-            return $additionalPaymentInfo['payment_method_title'];
+            return $additionalPaymentInfo['payment_method'];
         } else {
             return system_config()->getConfigData($field, $currentChannelCode, $currentLocaleCode);
         }

@@ -12,7 +12,7 @@
 This package provides seamless integration of MultiSafepay, a leading payment services provider, into your Bagisto online store.  
 With MultiSafepay, you can easily process transactions and collect payments from various local and international payment methods, giving your customers a smooth and secure checkout experience.
 
-For a detailed list of changes and updates, please refer to our [Changelog](CHANGELOG.md).
+For a detailed list of changes and updates, please refer to our [Changelog](docs/CHANGELOG.md).
 
 ![payment-methods](docs/payment-methods.png)
 

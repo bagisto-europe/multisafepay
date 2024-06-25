@@ -2,6 +2,7 @@
 
 namespace Bagisto\MultiSafePay\Payment;
 
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
 
 use MultiSafepay\Sdk;
@@ -200,8 +201,10 @@ class MultiSafePay extends Payment
                     ]);
                 }
                 
-                Log::info("Selected gateway is $selectedGateway for order id: $orderId");
-
+                if (!App::environment('production')) {
+                    Log::info("Selected gateway $selectedGateway for order id: $orderId");
+                }
+                
                 $orderRequest = (new OrderRequest())
                     ->addType('redirect')
                     ->addOrderId($randomOrderId)
@@ -211,8 +214,12 @@ class MultiSafePay extends Payment
                     ->addCustomer($customer)
                     ->addDelivery($shipping)
                     ->addPluginDetails($pluginDetails)
-                    ->addPaymentOptions($paymentOptions)
-                    ->addShoppingCart(new ShoppingCart($items));
+                    ->addPaymentOptions($paymentOptions);
+
+                    if (core()->getConfigData('sales.payment_methods.multisafepay.display_cart_items')) {
+                        $orderRequest->addShoppingCart(new ShoppingCart($items));
+                    }
+                    
 
                 Cart::deActivateCart();
 

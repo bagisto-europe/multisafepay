@@ -2,6 +2,7 @@
 
 namespace Bagisto\MultiSafePay\Payment;
 
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
 
 use MultiSafepay\Sdk;
@@ -221,6 +222,43 @@ class MultiSafePay extends Payment
     
                     return $transactionManager->getPaymentUrl();
                 }
+
+                $selectedGateway = '';
+                $orderItemAdditional = $order->items->first()->additional;
+                
+                if (isset($orderItemAdditional['payment'])) {
+                    $selectedGateway = $orderItemAdditional['payment']['payment_method'];
+                    $orderPayment = $order->payment;
+                    $orderPayment->update([
+                        'additional' => array_merge($orderPayment->additional ?? [], ['payment' => $orderItemAdditional['payment']])
+                    ]);
+                }
+                
+                if (!App::environment('production')) {
+                    Log::info("Selected gateway $selectedGateway for order id: $orderId");
+                }
+                
+                $orderRequest = (new OrderRequest())
+                    ->addType('redirect')
+                    ->addOrderId($randomOrderId)
+                    ->addDescriptionText($description)
+                    ->addMoney($amount)
+                    ->addGatewayCode($selectedGateway)
+                    ->addCustomer($customer)
+                    ->addDelivery($shipping)
+                    ->addPluginDetails($pluginDetails)
+                    ->addPaymentOptions($paymentOptions);
+
+                    if (core()->getConfigData('sales.payment_methods.multisafepay.display_cart_items')) {
+                        $orderRequest->addShoppingCart(new ShoppingCart($items));
+                    }
+                    
+
+                Cart::deActivateCart();
+
+                $transactionManager = $multiSafepaySdk->getTransactionManager()->create($orderRequest);
+
+                return $transactionManager->getPaymentUrl();
             }
         }
     }

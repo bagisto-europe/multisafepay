@@ -124,70 +124,103 @@ class MultiSafePay extends Payment
             $shippingAddress = $cart->shipping_address;
                         
             $cartItems = $this->getCartItems();
-            $order = $this->orderRepository->create((new OrderResource($cart))->jsonSerialize());
-
-            if ($order) {
-                session(['order' => $order]);
-
-                $orderId = $order->id;
-                $orderPrefix = core()->getConfigData('sales.payment_methods.multisafepay.prefix');
-                $randomOrderId = isset($orderPrefix) ? core()->getConfigData('sales.payment_methods.multisafepay.prefix') . $orderId : $orderId;
-
-                $multiSafepaySdk = new Sdk($this->apiKey, $this->productionMode ?? false);
-
-                $description = '#' . $orderId;
-
-                $amount = new Money(round($cart->grand_total * 100), $cart->cart_currency_code);
-
-                $address = (new Address())
-                    ->addStreetName($billingAddress->address)
-                    ->addZipCode($billingAddress->postcode)
-                    ->addCity($billingAddress->city)
-                    ->addState($billingAddress->state)
-                    ->addCountry(new Country($billingAddress->country));
-
-                $shippingData = (new Address())
-                    ->addStreetName($shippingAddress->address)
-                    ->addZipCode($shippingAddress->postcode)
-                    ->addCity($shippingAddress->city)
-                    ->addState($shippingAddress->state)
-                    ->addCountry(new Country($shippingAddress->country));
-
-                $customer = (new CustomerDetails())
-                    ->addFirstName($billingAddress->first_name)
-                    ->addLastName($billingAddress->last_name)
-                    ->addAddress($address)
-                    ->addEmailAddress(new EmailAddress($order->customer_email))
-                    ->addPhoneNumber(new PhoneNumber($order->addresses["0"]->phone));
+            if (request()->route()->getName() !== "admin.sales.orders.store") {
+                $order = $this->orderRepository->create((new OrderResource($cart))->jsonSerialize());
                 
-                $shipping = (new CustomerDetails())
-                    ->addFirstName($shippingAddress->first_name)
-                    ->addLastName($shippingAddress->last_name)
-                    ->addAddress($shippingData)
-                    ->addEmailAddress(new EmailAddress($order->customer_email))
-                    ->addPhoneNumber(new PhoneNumber($order->addresses["0"]->phone));
-
-                $pluginDetails = (new PluginDetails())
-                    ->addApplicationName('Bagisto')
-                    ->addApplicationVersion(core()->version())
-                    ->addPluginVersion($this->getPluginVersion());
-
-                $paymentOptions = (new PaymentOptions())
-                    ->addNotificationUrl(route('multisafepay.webhook'))
-                    ->addNotificationMethod('POST')
-                    ->addRedirectUrl(route('multisafepay.shop.checkout.onepage.success'))
-                    ->addCancelUrl(route('multisafepay.shop.checkout.onepage.success'))
-                    ->addCloseWindow(true);
-
-                $items = [];
-
-                foreach ($cartItems as $cartItem) {
-                    $items[] = (new Item())
-                        ->addName($cartItem['name'])
-                        ->addUnitPrice(new Money(round($cartItem['price'] * 100), $cart->cart_currency_code))
-                        ->addQuantity($cartItem['quantity'])
-                        ->addTaxRate(number_format((float)$cartItem['tax_percent'], 2) ?? 0)
-                        ->addMerchantItemId($cartItem['sku']);
+                if ($order) {
+                    session(['order' => $order]);
+    
+                    $orderId = $order->id;
+                    $orderPrefix = core()->getConfigData('sales.payment_methods.multisafepay.prefix');
+                    $randomOrderId = isset($orderPrefix) ? core()->getConfigData('sales.payment_methods.multisafepay.prefix') . $orderId : $orderId;
+    
+                    $multiSafepaySdk = new Sdk($this->apiKey, $this->productionMode ?? false);
+    
+                    $description = '#' . $orderId;
+    
+                    $amount = new Money(round($cart->grand_total * 100), $cart->cart_currency_code);
+    
+                    $address = (new Address())
+                        ->addStreetName($billingAddress->address)
+                        ->addZipCode($billingAddress->postcode)
+                        ->addCity($billingAddress->city)
+                        ->addState($billingAddress->state)
+                        ->addCountry(new Country($billingAddress->country));
+    
+                    $shippingData = (new Address())
+                        ->addStreetName($shippingAddress->address)
+                        ->addZipCode($shippingAddress->postcode)
+                        ->addCity($shippingAddress->city)
+                        ->addState($shippingAddress->state)
+                        ->addCountry(new Country($shippingAddress->country));
+    
+                    $customer = (new CustomerDetails())
+                        ->addFirstName($billingAddress->first_name)
+                        ->addLastName($billingAddress->last_name)
+                        ->addAddress($address)
+                        ->addEmailAddress(new EmailAddress($order->customer_email))
+                        ->addPhoneNumber(new PhoneNumber($order->addresses["0"]->phone));
+                    
+                    $shipping = (new CustomerDetails())
+                        ->addFirstName($shippingAddress->first_name)
+                        ->addLastName($shippingAddress->last_name)
+                        ->addAddress($shippingData)
+                        ->addEmailAddress(new EmailAddress($order->customer_email))
+                        ->addPhoneNumber(new PhoneNumber($order->addresses["0"]->phone));
+    
+                    $pluginDetails = (new PluginDetails())
+                        ->addApplicationName('Bagisto')
+                        ->addApplicationVersion(core()->version())
+                        ->addPluginVersion($this->getPluginVersion());
+    
+                    $paymentOptions = (new PaymentOptions())
+                        ->addNotificationUrl(route('multisafepay.webhook'))
+                        ->addNotificationMethod('POST')
+                        ->addRedirectUrl(route('multisafepay.shop.checkout.onepage.success'))
+                        ->addCancelUrl(route('multisafepay.shop.checkout.onepage.success'))
+                        ->addCloseWindow(true);
+    
+                    $items = [];
+    
+                    foreach ($cartItems as $cartItem) {
+                        $items[] = (new Item())
+                            ->addName($cartItem['name'])
+                            ->addUnitPrice(new Money(round($cartItem['price'] * 100), $cart->cart_currency_code))
+                            ->addQuantity($cartItem['quantity'])
+                            ->addTaxRate(number_format((float)$cartItem['tax_percent'], 2) ?? 0)
+                            ->addMerchantItemId($cartItem['sku']);
+                    }
+    
+                    $selectedGateway = '';
+                    $orderItemAdditional = $order->items->first()->additional;
+                    
+                    if (isset($orderItemAdditional['payment'])) {
+                        $selectedGateway = $orderItemAdditional['payment']['payment_method'];
+                        $orderPayment = $order->payment;
+                        $orderPayment->update([
+                            'additional' => array_merge($orderPayment->additional ?? [], ['payment' => $orderItemAdditional['payment']])
+                        ]);
+                    }
+                    
+                    Log::info("Selected gateway is $selectedGateway for order id: $orderId");
+    
+                    $orderRequest = (new OrderRequest())
+                        ->addType('redirect')
+                        ->addOrderId($randomOrderId)
+                        ->addDescriptionText($description)
+                        ->addMoney($amount)
+                        ->addGatewayCode($selectedGateway)
+                        ->addCustomer($customer)
+                        ->addDelivery($shipping)
+                        ->addPluginDetails($pluginDetails)
+                        ->addPaymentOptions($paymentOptions)
+                        ->addShoppingCart(new ShoppingCart($items));
+    
+                    Cart::deActivateCart();
+    
+                    $transactionManager = $multiSafepaySdk->getTransactionManager()->create($orderRequest);
+    
+                    return $transactionManager->getPaymentUrl();
                 }
 
                 $selectedGateway = '';

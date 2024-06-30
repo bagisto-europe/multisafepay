@@ -94,7 +94,6 @@ class WebhookController extends Controller
      * Validate the incoming notification using MultiSafepay's Notification class.
      *
      * @param  \Illuminate\Http\Request  $request  The HTTP request object.
-     * @return bool
      */
     protected function validateNotification(Request $request): bool
     {
@@ -109,6 +108,7 @@ class WebhookController extends Controller
             );
         } catch (\Exception $e) {
             Log::error('MultiSafepay - Error validating notification: '.$e->getMessage());
+
             return false;
         }
     }

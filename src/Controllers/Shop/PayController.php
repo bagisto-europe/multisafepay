@@ -156,7 +156,7 @@ class PayController extends Controller
 
         return redirect()->route('shop.customers.account.orders.view', $order->id)
             ->with('success', trans('multisafepay::app.shop.payment_success',
-                ['amount' =>  core()->formatPrice($order->base_grand_total)])
+                ['amount' => core()->formatPrice($order->base_grand_total)])
             );
     }
 }

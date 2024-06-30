@@ -9,15 +9,13 @@ class Core extends WebkulCore
     /**
      * Retrieve information from payment configuration.
      *
-     * @param  string  $field
      * @param  int|string|null  $channelId
      * @param  string|null  $locale
-     * @return mixed
      */
     public function getConfigData(string $field, ?string $currentChannelCode = null, ?string $currentLocaleCode = null): mixed
     {
         if (
-            $field === "sales.payment_methods.multisafepay.title"
+            $field === 'sales.payment_methods.multisafepay.title'
             && request()->id
             && (
                 (

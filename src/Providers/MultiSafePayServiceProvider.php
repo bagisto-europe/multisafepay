@@ -52,7 +52,8 @@ class MultiSafePayServiceProvider extends ServiceProvider
 
         if ($this->app->runningInConsole()) {
             $this->publishes([
-                __DIR__.'/../Resources/views' => $this->app->resourcePath('themes/default/views'),
+                __DIR__.'/../Resources/views/shop' => $this->app->resourcePath('themes/default/views'),
+                __DIR__.'/../Resources/views/admin' => $this->app->resourcePath('admin-themes/default/views'),
             ], 'multisafepay');
         }
     }

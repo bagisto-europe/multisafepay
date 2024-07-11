@@ -4,7 +4,6 @@
  * Multisafepay routes.
  */
 
- require 'checkout-routes.php';
- 
- require 'multisafepay-routes.php';
+require 'checkout-routes.php';
 
+require 'pay-routes.php';

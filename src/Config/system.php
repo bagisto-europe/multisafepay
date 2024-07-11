@@ -6,7 +6,7 @@ return [
         'name'   => 'multisafepay::app.system.title',
         'info'   => 'multisafepay::app.system.info',
         'sort'   => 3,
-        'fields' => [            
+        'fields' => [
             [
                 'name'          => 'active',
                 'title'         => 'admin::app.configuration.index.sales.payment-methods.status',
@@ -47,7 +47,7 @@ return [
                 'depends'       => 'active:1',
                 'channel_based' => true,
                 'locale_based'  => false,
-            ]
-        ]
-    ]
+            ],
+        ],
+    ],
 ];

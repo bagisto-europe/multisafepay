@@ -1,5 +1,12 @@
 # Changelog
 
+## Version 1.1.0
+
+### Added
+- Compatibility with Bagisto v2.2.*
+- Admins can now choose MultiSafepay as a payment option during the order creation.
+- Customers can easily pay their orders from the customer panel.
+
 ## Version 1.0.6
 
 ### Bugfixes

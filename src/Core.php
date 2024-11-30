@@ -9,13 +9,15 @@ class Core extends WebkulCore
     /**
      * Retrieve information from payment configuration.
      *
-     * @param  int|string|null  $channelId
-     * @param  string|null  $locale
+     * @param  string  $field
+     * @param  int|string|null  $currentChannelCode
+     * @param  string|null  $currentLocaleCode
+     * @return mixed
      */
     public function getConfigData(string $field, ?string $currentChannelCode = null, ?string $currentLocaleCode = null): mixed
     {
         if (
-            $field === 'sales.payment_methods.multisafepay.title'
+            $field === "sales.payment_methods.multisafepay.title"
             && request()->id
             && (
                 (
@@ -30,9 +32,9 @@ class Core extends WebkulCore
             && ($additionalPaymentInfo = $order->payment->additional['payment'] ?? false)
             && $additionalPaymentInfo
         ) {
-            return $additionalPaymentInfo['payment_method'];
+            return $additionalPaymentInfo['payment_method_title'];
         } else {
-            return system_config()->getConfigData($field, $currentChannelCode, $currentLocaleCode);
+            return parent::getConfigData($field, $currentChannelCode = null, $currentLocaleCode = null);
         }
     }
 }

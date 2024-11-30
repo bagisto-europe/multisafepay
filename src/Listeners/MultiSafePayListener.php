@@ -2,10 +2,12 @@
 
 namespace Bagisto\MultiSafePay\Listeners;
 
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use MultiSafepay\Api\Transactions\RefundRequest;
-use MultiSafepay\Api\Transactions\UpdateRequest;
+
 use MultiSafepay\ValueObject\Money;
+use MultiSafepay\Api\Transactions\UpdateRequest;
+use MultiSafepay\Api\Transactions\RefundRequest;
 
 class MultiSafePayListener
 {
@@ -25,7 +27,7 @@ class MultiSafePayListener
         $isProduction = core()->getConfigData('sales.payment_methods.multisafepay.production');
         $multiSafepaySdk = new \MultiSafepay\Sdk($apiKey, $isProduction);
 
-        $orderId = core()->getConfigData('sales.payment_methods.multisafepay.prefix').$refund->order_id;
+        $orderId = core()->getConfigData('sales.payment_methods.multisafepay.prefix') . $refund->order_id;
 
         try {
             $refundAmount = new Money(round($refund->grand_total * 100), $refund->order->base_currency_code);
@@ -35,17 +37,17 @@ class MultiSafePayListener
 
             $orderTransactionRepository = app('\Webkul\Sales\Repositories\OrderTransactionRepository');
             $transaction = $orderTransactionRepository->findWhere([
-                'order_id' => $refund->order_id,
+                'order_id' => $refund->order_id
             ])->first();
 
             $orderTransactionRepository->create([
                 'transaction_id' => $transaction->transaction_id,
-                'status'         => 'refunded',
-                'amount'         => $refund->grand_total,
-                'type'           => $transaction->type,
+                'status' => 'refunded',
+                'amount' => $refund->grand_total,
+                'type' => $transaction->type,
                 'payment_method' => $transaction->payment_method,
-                'invoice_id'     => $transaction->invoice_id,
-                'order_id'       => $transaction->order_id,
+                'invoice_id' => $transaction->invoice_id,
+                'order_id' => $transaction->order_id,
             ]);
             Log::info("MultiSafepay refund generated for order id: $orderId");
         } catch (\Exception $exception) {
@@ -72,9 +74,9 @@ class MultiSafePayListener
         $isProduction = core()->getConfigData('sales.payment_methods.multisafepay.production');
         $multiSafepaySdk = new \MultiSafepay\Sdk($apiKey, $isProduction);
 
-        $orderId = core()->getConfigData('sales.payment_methods.multisafepay.prefix').$shipment->order_id;
+        $orderId = core()->getConfigData('sales.payment_methods.multisafepay.prefix') . $shipment->order_id;
 
-        try {
+        try {            
             $updateRequest = new UpdateRequest();
             $updateRequest->addId($orderId);
             $updateRequest->addStatus('shipped');

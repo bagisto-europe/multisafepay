@@ -1,6 +1,6 @@
 <?php
 
 return [
-    'name'    => 'Bagisto MultiSafepay',
-    'version' => '1.1.0',
+    'name'    => 'Bagisto MultiSafePay',
+    'version' => '1.0.7',
 ];

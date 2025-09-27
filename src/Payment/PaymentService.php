@@ -44,9 +44,12 @@ class PaymentService
             $amount = $transactionData->getAmount();
             $orderAmount = round($order->base_grand_total * 100);
 
-            if ($amount === $orderAmount) {
+            if ($amount == $orderAmount) {
+                Log::info('Updating order to pending: '.$order->id);
                 $this->updateOrderStatus($order, $transactionData);
                 $this->handleInvoice($order);
+            } else {
+                Log::warning('Recieved wrong money amount for order with ID: ' . $order->id);
             }
         }
 

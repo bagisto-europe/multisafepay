@@ -139,7 +139,8 @@ class MultiSafePay extends Payment
 
                     $orderId = $order->id;
                     $orderPrefix = core()->getConfigData('sales.payment_methods.multisafepay.prefix');
-                    $randomOrderId = isset($orderPrefix) ? core()->getConfigData('sales.payment_methods.multisafepay.prefix').$orderId : $orderId;
+                    $randomOrderId = isset($orderPrefix) ? core()->getConfigData('sales.payment_methods.multisafepay.prefix') . $orderId : $orderId;
+                    $orderMustBeShipped = !empty($shippingAddress);
 
                     $multiSafepaySdk = new Sdk($this->apiKey, $this->productionMode ?? false);
 
@@ -154,12 +155,14 @@ class MultiSafePay extends Payment
                         ->addState($billingAddress->state)
                         ->addCountry(new Country($billingAddress->country));
 
-                    $shippingData = (new Address())
-                        ->addStreetName($shippingAddress->address)
-                        ->addZipCode($shippingAddress->postcode)
-                        ->addCity($shippingAddress->city)
-                        ->addState($shippingAddress->state)
-                        ->addCountry(new Country($shippingAddress->country));
+                    if ($orderMustBeShipped) {
+                        $shippingData = (new Address())
+                            ->addStreetName($shippingAddress->address)
+                            ->addZipCode($shippingAddress->postcode)
+                            ->addCity($shippingAddress->city)
+                            ->addState($shippingAddress->state)
+                            ->addCountry(new Country($shippingAddress->country));
+                    }
 
                     $customer = (new CustomerDetails())
                         ->addFirstName($billingAddress->first_name)
@@ -168,12 +171,14 @@ class MultiSafePay extends Payment
                         ->addEmailAddress(new EmailAddress($order->customer_email))
                         ->addPhoneNumber(new PhoneNumber($order->addresses['0']->phone));
 
-                    $shipping = (new CustomerDetails())
-                        ->addFirstName($shippingAddress->first_name)
-                        ->addLastName($shippingAddress->last_name)
-                        ->addAddress($shippingData)
-                        ->addEmailAddress(new EmailAddress($order->customer_email))
-                        ->addPhoneNumber(new PhoneNumber($order->addresses['0']->phone));
+                    if ($orderMustBeShipped) {
+                        $shipping = (new CustomerDetails())
+                            ->addFirstName($shippingAddress->first_name)
+                            ->addLastName($shippingAddress->last_name)
+                            ->addAddress($shippingData)
+                            ->addEmailAddress(new EmailAddress($order->customer_email))
+                            ->addPhoneNumber(new PhoneNumber($order->addresses['0']->phone));
+                    }
 
                     $pluginDetails = (new PluginDetails())
                         ->addApplicationName('Bagisto')
@@ -209,9 +214,12 @@ class MultiSafePay extends Payment
                         ->addMoney($amount)
                         ->addGatewayCode($selectedGateway)
                         ->addCustomer($customer)
-                        ->addDelivery($shipping)
                         ->addPluginDetails($pluginDetails)
                         ->addPaymentOptions($paymentOptions);
+
+                    if($orderMustBeShipped){
+                        $orderRequest->addDelivery($shipping);
+                    }
 
                     if (core()->getConfigData('sales.payment_methods.multisafepay.display_cart_items')) {
                         $items = [];
@@ -245,7 +253,7 @@ class MultiSafePay extends Payment
      */
     public function getPluginVersion()
     {
-        $manifestPath = dirname(__DIR__).'/Resources/manifest.php';
+        $manifestPath = dirname(__DIR__) . '/Resources/manifest.php';
         $manifest = include $manifestPath;
         $version = $manifest['version'];
 
